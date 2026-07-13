@@ -1,0 +1,26 @@
+# 환경 변수 — API 키는 절대 커밋 금지 (규칙 10)
+.env
+.env.*
+server/.env
+
+# 의존성
+node_modules/
+server/__pycache__/
+**/__pycache__/
+server/venv/
+.venv/
+
+# 빌드 산출물
+dist/
+dist-ssr/
+*.local
+
+# 에디터/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 로그
+*.log
+npm-debug.log*
