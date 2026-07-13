@@ -3,6 +3,7 @@ import ModeSelect from './components/ModeSelect';
 import CameraView from './components/CameraView';
 import PhotoPreview from './components/PhotoPreview';
 import { captureFromVideo } from './lib/image';
+import type { CameraFacing } from './lib/camera';
 import type { CapturedImage, MeasurementMode } from './types';
 
 /** 앱 화면 단계 — Phase 1 범위: 모드 선택 → 카메라 → 미리보기 */
@@ -12,6 +13,8 @@ function App() {
   const [screen, setScreen] = useState<Screen>('mode-select');
   const [mode, setMode] = useState<MeasurementMode | null>(null);
   const [image, setImage] = useState<CapturedImage | null>(null);
+  // 전/후면 선택 — 재촬영으로 카메라에 재진입해도 유지
+  const [facing, setFacing] = useState<CameraFacing>('environment');
 
   const handleModeSelect = (selected: MeasurementMode) => {
     setMode(selected);
@@ -35,6 +38,10 @@ function App() {
     return (
       <CameraView
         mode={mode}
+        facing={facing}
+        onToggleFacing={() =>
+          setFacing((f) => (f === 'environment' ? 'user' : 'environment'))
+        }
         onBack={() => setScreen('mode-select')}
         onShutter={handleShutter}
       />

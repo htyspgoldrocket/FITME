@@ -4,12 +4,27 @@
 // - 자이로: 기기 수직 여부 실시간 감시 (전략 1 — 촬영 각도 가이드)
 // ============================================================
 
-/** 후면 카메라 스트림을 연다. 실패 시 enumerateDevices로 후면 장치를 찾아 재시도. */
-export async function startRearCamera(): Promise<MediaStream> {
+/** 카메라 방향 — environment: 후면(기본), user: 전면 */
+export type CameraFacing = 'environment' | 'user';
+
+const FACING_LABEL_PATTERN: Record<CameraFacing, RegExp> = {
+  environment: /back|rear|environment/i,
+  user: /front|user|face/i,
+};
+
+/**
+ * 지정한 방향의 카메라 스트림을 연다.
+ * facingMode 실패 시 enumerateDevices로 라벨을 보고 해당 방향 장치를 찾아 재시도.
+ * 주의: 전면 카메라도 스트림 자체는 거울상이 아니다 — 미리보기 반전은 UI(CSS)에서만
+ * 처리하고, 캡처 이미지는 원본 그대로 둔다 (ArUco 마커는 좌우 반전 시 검출 불가).
+ */
+export async function startCamera(
+  facing: CameraFacing = 'environment',
+): Promise<MediaStream> {
   const base: MediaStreamConstraints = {
     audio: false,
     video: {
-      facingMode: { ideal: 'environment' },
+      facingMode: { ideal: facing },
       width: { ideal: 1920 },
       height: { ideal: 1080 },
     },
@@ -18,19 +33,18 @@ export async function startRearCamera(): Promise<MediaStream> {
   try {
     return await navigator.mediaDevices.getUserMedia(base);
   } catch {
-    // 폴백: 장치 목록에서 라벨로 후면 카메라를 직접 지정
+    // 폴백: 장치 목록에서 라벨로 해당 방향 카메라를 직접 지정
     const devices = await navigator.mediaDevices.enumerateDevices();
-    const rear = devices.find(
-      (d) =>
-        d.kind === 'videoinput' && /back|rear|environment/i.test(d.label),
+    const match = devices.find(
+      (d) => d.kind === 'videoinput' && FACING_LABEL_PATTERN[facing].test(d.label),
     );
-    if (!rear) {
-      // 후면을 못 찾으면 아무 카메라나 (PC 개발 환경 등)
+    if (!match) {
+      // 해당 방향을 못 찾으면 아무 카메라나 (PC 개발 환경 등)
       return navigator.mediaDevices.getUserMedia({ video: true, audio: false });
     }
     return navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: { deviceId: { exact: rear.deviceId } },
+      video: { deviceId: { exact: match.deviceId } },
     });
   }
 }

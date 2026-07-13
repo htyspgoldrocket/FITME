@@ -118,6 +118,11 @@ body {
   object-fit: cover;
 }
 
+/* 전면 카메라 미리보기 거울상 (캡처 이미지에는 적용되지 않음) */
+.camera__video--mirrored {
+  transform: scaleX(-1);
+}
+
 .camera__overlay {
   position: absolute;
   inset: 0;
@@ -209,9 +214,23 @@ body {
   left: 0;
   right: 0;
   display: flex;
+  align-items: center;
   justify-content: center;
   padding: 16px 0 calc(24px + env(safe-area-inset-bottom));
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+}
+
+.camera__flip {
+  position: absolute;
+  right: 20px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 .camera__shutter {
@@ -225,6 +244,11 @@ body {
 
 .camera__shutter:active {
   background: rgba(255, 255, 255, 0.6);
+}
+
+.camera__shutter:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* ===== 미리보기 화면 ===== */
