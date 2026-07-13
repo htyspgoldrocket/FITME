@@ -32,5 +32,7 @@ export default defineConfig({
   ],
   server: {
     host: true, // 모바일 기기에서 같은 네트워크로 접속 가능하도록
+    // 폰 수동 검증용 Cloudflare 빠른 터널 허용 (dev 서버 전용, 빌드에는 영향 없음)
+    allowedHosts: ['.trycloudflare.com'],
   },
 });
