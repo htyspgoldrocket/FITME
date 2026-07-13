@@ -227,6 +227,55 @@ body {
   background: rgba(255, 255, 255, 0.6);
 }
 
+/* ===== 미리보기 화면 ===== */
+.preview {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+}
+
+.preview__img {
+  flex: 1;
+  min-height: 0;
+  object-fit: contain;
+  width: 100%;
+}
+
+.preview__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  color: #d1d5db;
+  text-align: center;
+}
+
+.preview__actions {
+  display: flex;
+  gap: 12px;
+  padding: 0 16px calc(20px + env(safe-area-inset-bottom));
+}
+
+.preview__btn {
+  flex: 1;
+  padding: 14px 0;
+  border-radius: 12px;
+  border: 1px solid #4b5563;
+  background: #1f2937;
+  color: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.preview__btn--primary {
+  border-color: #22c55e;
+  background: #15803d;
+  font-weight: 600;
+}
+
 /* ===== 자리표시자 화면 ===== */
 .placeholder {
   display: flex;
