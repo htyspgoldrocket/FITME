@@ -14,3 +14,95 @@ body {
   background: #111827;
   color: #f9fafb;
 }
+
+/* ===== 모드 선택 화면 ===== */
+.mode-select {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.mode-select__header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.mode-select__header h1 {
+  margin: 0 0 4px;
+  font-size: 2rem;
+  letter-spacing: 0.1em;
+}
+
+.mode-select__header p {
+  margin: 0;
+  color: #9ca3af;
+}
+
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  border-radius: 16px;
+  border: 2px solid #374151;
+  background: #1f2937;
+  color: inherit;
+  text-align: left;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.mode-card:active {
+  transform: scale(0.98);
+}
+
+.mode-card--simple:active,
+.mode-card--simple:focus-visible {
+  border-color: #22c55e;
+}
+
+.mode-card--precise:active,
+.mode-card--precise:focus-visible {
+  border-color: #3b82f6;
+}
+
+.mode-card__badge {
+  font-weight: 600;
+}
+
+.mode-card strong {
+  font-size: 1.2rem;
+}
+
+.mode-card ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* ===== 자리표시자 화면 ===== */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 100dvh;
+  padding: 16px;
+  text-align: center;
+}
+
+.placeholder button {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1px solid #4b5563;
+  background: #1f2937;
+  color: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
