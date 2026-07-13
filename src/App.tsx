@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ModeSelect from './components/ModeSelect';
+import CameraView from './components/CameraView';
 import type { MeasurementMode } from './types';
 
 /** 앱 화면 단계 — Phase 1 범위: 모드 선택 → 카메라 → 미리보기 */
@@ -14,19 +15,31 @@ function App() {
     setScreen('camera');
   };
 
-  if (screen === 'mode-select') {
+  // TODO(Phase 1-Step 6): 캡처 → CapturedImage 생성 → 미리보기 화면
+  const handleShutter = (_video: HTMLVideoElement) => {
+    alert('촬영 캡처는 Step 1-6에서 구현됩니다.');
+  };
+
+  if (screen === 'mode-select' || mode === null) {
     return <ModeSelect onSelect={handleModeSelect} />;
   }
 
-  // TODO(Phase 1-Step 5): 카메라 화면 구현. 지금은 자리표시자.
+  if (screen === 'camera') {
+    return (
+      <CameraView
+        mode={mode}
+        onBack={() => setScreen('mode-select')}
+        onShutter={handleShutter}
+      />
+    );
+  }
+
+  // TODO(Phase 1-Step 6): 미리보기(PhotoPreview) 화면
   return (
     <main className="placeholder">
-      <p>
-        선택한 모드: <strong>{mode === 'simple' ? '간편(카드)' : '정밀(ArUco)'}</strong>
-      </p>
-      <p>카메라 화면은 Step 1-5에서 구현됩니다.</p>
-      <button type="button" onClick={() => setScreen('mode-select')}>
-        모드 다시 선택
+      <p>미리보기 화면은 Step 1-6에서 구현됩니다.</p>
+      <button type="button" onClick={() => setScreen('camera')}>
+        카메라로 돌아가기
       </button>
     </main>
   );
