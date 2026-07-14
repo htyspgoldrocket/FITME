@@ -21,12 +21,27 @@ from services.reference_detect import ARUCO_DICT_ID, MARKER_ID, MARKER_SIZE_MM  
 
 DPI = 300
 A4_MM = (210.0, 297.0)
+# 절취선: 마커 가장자리에서 이만큼 떨어진 곳에 점선 (여백 1cm 이상 요건 충족)
+CUT_MARGIN_MM = 15.0
 OUT_PDF = Path(__file__).resolve().parent.parent / "data" / "aruco_marker.pdf"
 OUT_PNG = OUT_PDF.with_name("aruco_marker_preview.png")
 
 
 def mm_to_px(mm: float) -> int:
     return round(mm * DPI / 25.4)
+
+
+def _dashed_rect(draw: ImageDraw.ImageDraw, box: tuple[int, int, int, int],
+                 dash_px: int, gap_px: int, width: int) -> None:
+    """점선 사각형 (절취선용)."""
+    x0, y0, x1, y1 = box
+    step = dash_px + gap_px
+    for x in range(x0, x1, step):
+        draw.line([(x, y0), (min(x + dash_px, x1), y0)], fill=0, width=width)
+        draw.line([(x, y1), (min(x + dash_px, x1), y1)], fill=0, width=width)
+    for y in range(y0, y1, step):
+        draw.line([(x0, y), (x0, min(y + dash_px, y1))], fill=0, width=width)
+        draw.line([(x1, y), (x1, min(y + dash_px, y1))], fill=0, width=width)
 
 
 def _load_font(size_px: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -53,6 +68,17 @@ def build_page() -> Image.Image:
     my = mm_to_px(70)
     page.paste(Image.fromarray(marker), (mx, my))
 
+    # ---- 절취선 (마커에서 CUT_MARGIN_MM 떨어진 점선) ----
+    cut = mm_to_px(CUT_MARGIN_MM)
+    _dashed_rect(
+        draw,
+        (mx - cut, my - cut, mx + side_px + cut, my + side_px + cut),
+        dash_px=mm_to_px(3),
+        gap_px=mm_to_px(2),
+        width=mm_to_px(0.4),
+    )
+    # (절취 안내는 상단 안내 문구에 포함 — 별도 라벨은 문구와 겹쳐서 제거)
+
     # ---- 제목·안내 문구 ----
     f_big = _load_font(mm_to_px(7))
     f_mid = _load_font(mm_to_px(4.5))
@@ -71,7 +97,7 @@ def build_page() -> Image.Image:
     )
     center_text(
         mm_to_px(47),
-        "마커 둘레의 흰 여백을 1cm 이상 남기고 자르세요 (여백도 인식에 필요)",
+        "마커 주위 점선(절취선)을 따라 자르세요 — 흰 여백도 인식에 필요합니다",
         f_small,
     )
 
