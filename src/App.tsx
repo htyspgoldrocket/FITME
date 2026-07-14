@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import ModeSelect from './components/ModeSelect';
-import CameraView from './components/CameraView';
+import CameraView, { TIMER_OPTIONS, type TimerSeconds } from './components/CameraView';
 import PhotoPreview from './components/PhotoPreview';
 import { captureFromVideo } from './lib/image';
 import type { CameraFacing } from './lib/camera';
@@ -15,6 +15,8 @@ function App() {
   const [image, setImage] = useState<CapturedImage | null>(null);
   // 전/후면 선택 — 재촬영으로 카메라에 재진입해도 유지
   const [facing, setFacing] = useState<CameraFacing>('environment');
+  // 셔터 타이머 — facing과 동일하게 재진입해도 유지
+  const [timerSec, setTimerSec] = useState<TimerSeconds>(0);
 
   const handleModeSelect = (selected: MeasurementMode) => {
     setMode(selected);
@@ -41,6 +43,12 @@ function App() {
         facing={facing}
         onToggleFacing={() =>
           setFacing((f) => (f === 'environment' ? 'user' : 'environment'))
+        }
+        timerSec={timerSec}
+        onCycleTimer={() =>
+          setTimerSec(
+            (t) => TIMER_OPTIONS[(TIMER_OPTIONS.indexOf(t) + 1) % TIMER_OPTIONS.length],
+          )
         }
         onBack={() => setScreen('mode-select')}
         onShutter={handleShutter}

@@ -10,30 +10,48 @@ import {
 } from '../lib/camera';
 import type { MeasurementMode } from '../types';
 
+/** 셔터 타이머(초). 0 = 즉시 촬영 */
+export type TimerSeconds = 0 | 3 | 5 | 10;
+export const TIMER_OPTIONS: TimerSeconds[] = [0, 3, 5, 10];
+
 interface CameraViewProps {
   mode: MeasurementMode;
   /** 전면/후면 선택 — 재촬영 등 화면 전환 후에도 유지되도록 App이 보관 */
   facing: CameraFacing;
   onToggleFacing: () => void;
+  /** 셔터 타이머 — facing과 동일하게 App이 보관해 재촬영 후에도 유지 */
+  timerSec: TimerSeconds;
+  onCycleTimer: () => void;
   onBack: () => void;
   /** 촬영 버튼 탭 시 현재 비디오 프레임 전달 — 캡처 파이프라인은 Step 1-6 */
   onShutter: (video: HTMLVideoElement) => void;
 }
 
 /** 촬영 화면 — 전/후면 카메라 + 전신/기준물 가이드 오버레이 + 자이로 수직 표시 */
-function CameraView({ mode, facing, onToggleFacing, onBack, onShutter }: CameraViewProps) {
+function CameraView({
+  mode,
+  facing,
+  onToggleFacing,
+  timerSec,
+  onCycleTimer,
+  onBack,
+  onShutter,
+}: CameraViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [tilt, setTilt] = useState<TiltState | null>(null);
   const [needsGyroTap, setNeedsGyroTap] = useState(false);
   // 스트림 준비 전(초기 로딩·전환 중) 셔터를 막아 빈 프레임 캡처를 방지
   const [ready, setReady] = useState(false);
+  // 타이머 카운트다운 남은 초 (null = 카운트다운 아님)
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   // 카메라 시작/정지 (방향 전환 시 스트림 재시작)
   useEffect(() => {
     let stream: MediaStream | null = null;
     let cancelled = false;
     setReady(false);
+    setCountdown(null); // 카메라 전환 시 진행 중이던 카운트다운 취소
     (async () => {
       try {
         stream = await startCamera(facing);
@@ -69,6 +87,30 @@ function CameraView({ mode, facing, onToggleFacing, onBack, onShutter }: CameraV
     }
     return watchTilt(setTilt);
   }, []);
+
+  // 카운트다운 진행: 1초마다 감소, 0이 되면 촬영. 화면 이탈 시 자동 정리.
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      setCountdown(null);
+      if (videoRef.current) onShutter(videoRef.current);
+      return;
+    }
+    const id = window.setTimeout(() => setCountdown(countdown - 1), 1000);
+    return () => window.clearTimeout(id);
+  }, [countdown, onShutter]);
+
+  const handleShutterClick = () => {
+    if (countdown !== null) {
+      setCountdown(null); // 카운트다운 중 재탭 = 취소
+      return;
+    }
+    if (timerSec === 0) {
+      if (videoRef.current) onShutter(videoRef.current);
+      return;
+    }
+    setCountdown(timerSec);
+  };
 
   const enableGyro = async () => {
     if (await requestGyroPermission()) {
@@ -133,14 +175,33 @@ function CameraView({ mode, facing, onToggleFacing, onBack, onShutter }: CameraV
         )}
       </div>
 
-      {/* 하단: 셔터 + 카메라 전환 */}
+      {/* 카운트다운 표시 */}
+      {countdown !== null && countdown > 0 && (
+        <div className="camera__countdown" aria-live="assertive">
+          {countdown}
+        </div>
+      )}
+
+      {/* 하단: 타이머 + 셔터 + 카메라 전환 */}
       <div className="camera__bottom">
         <button
           type="button"
-          className="camera__shutter"
-          aria-label="촬영"
+          className="camera__timer"
+          aria-label="셔터 타이머"
+          onClick={onCycleTimer}
+          disabled={countdown !== null}
+        >
+          ⏱ {timerSec === 0 ? '끔' : `${timerSec}초`}
+        </button>
+        <button
+          type="button"
+          className={
+            'camera__shutter' +
+            (countdown !== null ? ' camera__shutter--counting' : '')
+          }
+          aria-label={countdown !== null ? '카운트다운 취소' : '촬영'}
           disabled={!ready}
-          onClick={() => videoRef.current && onShutter(videoRef.current)}
+          onClick={handleShutterClick}
         />
         <button
           type="button"

@@ -233,6 +233,42 @@ body {
   cursor: pointer;
 }
 
+.camera__timer {
+  position: absolute;
+  left: 20px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.camera__timer:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* 카운트다운 중 셔터: 취소 가능 상태임을 색으로 표시 */
+.camera__shutter--counting {
+  border-color: rgba(239, 68, 68, 0.9);
+  background: rgba(239, 68, 68, 0.35);
+}
+
+.camera__countdown {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 7rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}
+
 .camera__shutter {
   width: 68px;
   height: 68px;
