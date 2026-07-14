@@ -22,6 +22,10 @@ dist-ssr/
 .DS_Store
 Thumbs.db
 
+# 테스트 픽스처 — 개인 신체 사진·실측값은 로컬에만 보관 (README.md만 커밋)
+server/tests/fixtures/*
+!server/tests/fixtures/README.md
+
 # 로그
 *.log
 npm-debug.log*
