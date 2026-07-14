@@ -8,3 +8,8 @@ opencv-python>=4.9.0,<4.10
 numpy>=1.26.0,<2.0
 pillow>=10.2.0,<11.0
 # playwright ^1.41.0 will be added in Phase 3 (clothing scraping)
+
+# --- test-only deps (not used at runtime) ---
+pytest>=8.0,<9.0
+httpx>=0.26,<0.28
+

@@ -9,6 +9,7 @@ server/__pycache__/
 **/__pycache__/
 server/venv/
 .venv/
+.pytest_cache/
 
 # 빌드 산출물
 dist/
