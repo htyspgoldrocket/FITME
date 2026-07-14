@@ -12,7 +12,7 @@ ISO/IEC 7810 ID-1 카드: 85.6 x 53.98 mm, 비율 1.586.
   - B는 "옷보다 밝은 카드"를 가정한다. 어두운 카드 + 어두운 옷 조합은 미지원.
   - 카드는 대체로 가로로 들었다고 가정 (긴 변 기울기 ±45° 이내, 촬영 가이드와 일치).
 
-ArUco 검출(정밀 모드)은 Step 2-3에서 추가 예정 (아직 미구현).
+정밀 모드(Step 2-3): ArUco 마커 검출 — detect_aruco() 참조.
 호모그래피·척도 계산은 Step 2-4의 measure.py 담당 — 여기서는 꼭짓점만 찾는다.
 """
 
@@ -42,6 +42,14 @@ MIN_RECT_FILL = 0.70
 
 APPROX_EPS_FRAC = 0.02   # 윤곽 근사 정밀도 (둘레 대비)
 WORK_WIDTH = 1080        # 내부 작업 해상도 (반환 좌표는 원본 픽셀로 환산)
+
+# ===== ArUco 마커 (정밀 모드) =====
+# ★ 실제 출력 크기와 반드시 일치해야 함 — scripts/generate_marker.py가 이 값으로
+#   PDF를 만들고, 척도 계산(2-4·2-6)이 이 값을 신뢰한다. 바꾸면 마커 재출력 필수.
+MARKER_SIZE_MM = 70.0
+# 4x4 사전: 비트가 커서(칸이 굵어서) 2m 거리에서도 검출이 잘 됨. ID는 0~49.
+ARUCO_DICT_ID = cv2.aruco.DICT_4X4_50
+MARKER_ID = 0  # 기본 마커 ID (다중 마커 배치는 추후 확장)
 
 
 def detect_card(image_bgr: np.ndarray) -> dict:
@@ -140,6 +148,40 @@ def _strategy_bright_blob(work_bgr: np.ndarray, smooth: np.ndarray) -> np.ndarra
             best_score = score
             best = cv2.boxPoints(rect)  # 손가락으로 빈 부분을 사각형으로 보간
     return best
+
+
+# ---------- 정밀 모드: ArUco 마커 검출 (Step 2-3) ----------
+
+def detect_aruco(image_bgr: np.ndarray) -> dict:
+    """사진에서 ArUco 마커를 찾아 ReferenceInfo 형태의 dict를 반환한다.
+
+    OpenCV 4.7+ 신 API(ArucoDetector) 사용 — 4.9 기준.
+    여러 마커가 보이면 가장 큰 것(=측정 부위에 가까운 것)을 사용한다.
+    cornersPx 순서는 카드와 동일: 좌상 → 우상 → 우하 → 좌하 (이미지 기준).
+    """
+    gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+    detector = cv2.aruco.ArucoDetector(
+        cv2.aruco.getPredefinedDictionary(ARUCO_DICT_ID),
+        cv2.aruco.DetectorParameters(),
+    )
+    corners_list, ids, _rejected = detector.detectMarkers(gray)
+
+    best: np.ndarray | None = None
+    if ids is not None and len(corners_list) > 0:
+        # corners_list: 마커별 (1,4,2) float32 — 서브픽셀 정밀 좌표
+        best = max(
+            (c.reshape(4, 2) for c in corners_list),
+            key=lambda q: cv2.contourArea(q.astype(np.float32)),
+        )
+        best = _order_corners(best.astype(np.float32))
+
+    return {
+        "type": "aruco",
+        "realWidthMm": MARKER_SIZE_MM,
+        "realHeightMm": MARKER_SIZE_MM,  # 정사각형
+        "detected": best is not None,
+        "cornersPx": best.tolist() if best is not None else None,
+    }
 
 
 # ---------- 공통 판정 ----------
