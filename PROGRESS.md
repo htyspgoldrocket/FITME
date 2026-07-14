@@ -4,9 +4,31 @@
 
 ## 현재 위치
 
-- **Phase 1: ✅ 완료 + 수정 재검증 완료** (2026-07-14, Gate 전 항목 통과 + 사용자 승인)
+- **Phase 1: ✅ 완료 + 수정 재검증 완료** (2026-07-14, Gate 통과, 태그 `phase-1-complete`)
   - Gate 리포트(수정 이력 포함): `docs/gate-reports/phase-1-gate.md`
-- **다음 시작 지점: Phase 2 — Step 2-1** (변동 없음, 아래 "다음 할 일" 참조)
+- **Phase 2: 🔄 진행 중 — Step 2-1 완료** (2026-07-14, 사용자 직접 확인 + 자동 테스트 통과)
+- **다음 시작 지점: Step 2-2 — OpenCV 신용카드 사각형 검출 (간편 모드)**
+  - 만들 것: `server/services/reference_detect.py` (윤곽 검출 → 4꼭짓점 →
+    85.6:53.98 비율 필터 → `ReferenceInfo` 반환) + 검출 테스트
+  - 필요물: 카드 포함 전신 사진 최소 1장 (`server/tests/fixtures/`) — 사용자에게 요청
+
+## Phase 2 Step 완료 이력
+
+### Step 2-1 — FastAPI 스캐폴딩 + /analyze 더미 (2026-07-14 완료)
+
+**만든 파일**
+- `server/main.py` — FastAPI 앱, CORS(localhost:5173), `/health`
+- `server/requirements.txt` — CLAUDE.md 8장 버전 고정 (전부 범위 내 설치 확인)
+- `server/models/schemas.py` — `src/types/index.ts`와 1:1 Pydantic 모델
+- `server/routes/analyze.py` — `POST /analyze` 더미 (응답에 `"stub"` 표시 필드,
+  규칙 1의 의도된 예외. Step 2-6에서 실측정으로 교체하며 제거)
+- `server/tests/test_analyze.py` + `conftest.py` — pytest 5건
+
+**검증 결과**
+- 직접 확인: 사용자가 브라우저 `/docs`(Swagger)로 통과 확인
+- 자동 테스트: 5/5 통과 (simple/precise 규격, 422 검증 2건, /health)
+
+**관련 커밋**: `e2f6acf`(개발), `07141b4`(테스트)
 
 ## Phase 1 수정 반영 (2026-07-14, Gate 통과 후)
 
@@ -64,19 +86,34 @@
   카메라 전환 스모크(`e2e-flip.mjs`) — puppeteer-core + Chrome 가짜 카메라 방식.
 - CLAUDE.md 13-4에 따라 Phase 2부터는 `server/tests/`에 정식 보관할 것.
 
-## 다음 할 일 — Phase 2: 신체 치수 분석 엔진
+## Phase 2 남은 계획 (Step 분해는 2026-07-14 사용자 승인됨)
 
-**시작 전 필수 (규칙 2 / 5-3)**: Phase 2를 Step 목록(권장: 2-1~2-8, CLAUDE.md 9장)으로
-분해해 사용자 확인부터 받는다.
-
-- **Step 2-1**: FastAPI 서버 스캐폴딩 + `/analyze` 빈 엔드포인트 (더미 응답)
-  - `server/main.py`, `server/routes/analyze.py`, Pydantic 모델(타입과 1:1)
-  - 버전 고정: fastapi ^0.109.0, uvicorn ^0.27.0, pydantic ^2.5.0, anthropic ^0.18.0,
-    opencv-python ^4.9.0, numpy ^1.26.0, pillow ^10.2.0 (규칙 8 — 임의 상향 금지)
-  - `server/.env`에 API 키 (이미 .gitignore:4로 차단 확인됨)
+- ~~2-1 FastAPI 스캐폴딩~~ ✅ → **2-2 카드 검출(다음)** → 2-3 ArUco → 2-4 호모그래피
+  → 2-5 Claude Vision(이때부터 API 키 필요, `server/.env`) → 2-6 cm 산출·타원 근사
+  → 2-7 다중 프레임·신뢰도 → 2-8 프론트 연결
 - **사전 준비물 (사용자에게 요청할 것)**: 카드 포함 전신 사진 + 줄자 실측 정답값,
-  **최소 3명분** (`server/tests/fixtures/`에 보관)
+  **최소 3명분** (`server/tests/fixtures/`에 보관). 2-2 개발에는 우선 1장이면 시작 가능.
 - Phase 2 Gate: 자동 7항목 + 수동 실측 비교(길이 ±3cm, 둘레 ±5cm, 3명 전원) + 통합
+  + 보안(프론트 번들 API 키 grep)
+
+## 주의사항 / 배운 것 (Phase 2에서)
+
+1. **Windows에서 requirements.txt 주석은 영어(ASCII)로**: 한글 주석을 넣으면 pip가
+   시스템 인코딩(cp949)으로 읽다가 UnicodeDecodeError로 설치 실패. 실제로 겪음.
+2. **서버 실행 명령** (venv는 `server/venv`, gitignore됨 — 새 환경에서는
+   `python -m venv venv` 후 `pip install -r requirements.txt`로 재생성):
+   ```powershell
+   cd C:\claude_code\FITME\server
+   .\venv\Scripts\uvicorn.exe main:app --reload --port 8000
+   # 확인: http://localhost:8000/docs (Swagger) 또는 /health
+   ```
+3. **테스트 실행 명령**:
+   ```powershell
+   cd C:\claude_code\FITME\server
+   .\venv\Scripts\python.exe -m pytest tests/ -v
+   ```
+4. PowerShell 5.1 콘솔에서 API 응답의 한글이 깨져 보이는 것은 표시 문제
+   (실제 바이트는 UTF-8 정상). Swagger나 프론트에서는 정상.
 
 ## 주의사항 / 배운 것 (Phase 1 수정에서)
 
