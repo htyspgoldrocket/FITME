@@ -1,17 +1,25 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git init *)",
-      "Bash(git remote *)",
-      "Bash(git add *)",
-      "Bash(git rm *)",
-      "Bash(rm -rf FITME/.git)",
-      "Bash(git branch *)",
-      "Bash(git commit *)",
-      "Bash(git push *)",
-      "Bash(git pull *)",
-      "Bash(gh repo *)",
-      "WebFetch(domain:github.com)"
+      "PowerShell(npm *)",
+      "PowerShell(git add *)",
+      "PowerShell(npx tsc --noEmit; if \\($?\\) { \"typecheck OK\" })",
+      "PowerShell(New-Item *)",
+      "PowerShell($sp = \"C:\\\\Users\\\\htysp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--claude-code-FITME\\\\15bd1834-2210-4318-b32f-644c8a596c34\\\\scratchpad\"; npx esbuild src/lib/api.ts --bundle --format=esm --outfile=\"$sp\\\\api-bundle.mjs\"; if \\($?\\) { node \"$sp\\\\check-stub.mjs\" })",
+      "PowerShell($paths = @\\(\"$env:ProgramFiles\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe\", \"${env:ProgramFiles\\(x86\\)}\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe\", \"$env:LOCALAPPDATA\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe\", \"${env:ProgramFiles\\(x86\\)}\\\\Microsoft\\\\Edge\\\\Application\\\\msedge.exe\", \"$env:ProgramFiles\\\\Microsoft\\\\Edge\\\\Application\\\\msedge.exe\"\\); foreach \\($p in $paths\\) { if \\(Test-Path $p\\) { $p } })",
+      "PowerShell(try { \\(Get-Command ngrok -ErrorAction Stop\\).Source } catch { \"ngrok not found\" }; try { \\(Get-Command cloudflared -ErrorAction Stop\\).Source } catch { \"cloudflared not found\" })",
+      "PowerShell(winget install *)",
+      "PowerShell(npx tsc --noEmit; if \\($?\\) { \"typecheck OK\" }; $cf = @\\(\"$env:ProgramFiles\\\\cloudflared\\\\cloudflared.exe\", \"${env:ProgramFiles\\(x86\\)}\\\\cloudflared\\\\cloudflared.exe\", \"$env:LOCALAPPDATA\\\\Microsoft\\\\WinGet\\\\Links\\\\cloudflared.exe\"\\) | Where-Object { Test-Path $_ } | Select-Object -First 1; if \\($cf\\) { $cf; & $cf --version } else { \"cloudflared exe not found in common paths\" })",
+      "PowerShell(& \"${env:ProgramFiles\\(x86\\)}\\\\cloudflared\\\\cloudflared.exe\" tunnel --url http://localhost:5173)",
+      "PowerShell(Start-Sleep -Seconds 8; Get-Content \"C:\\\\Users\\\\htysp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--claude-code-FITME\\\\15bd1834-2210-4318-b32f-644c8a596c34\\\\tasks\\\\bvz4f0m9l.output\" -Tail 10; \"===== tunnel =====\"; Get-Content \"C:\\\\Users\\\\htysp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--claude-code-FITME\\\\15bd1834-2210-4318-b32f-644c8a596c34\\\\tasks\\\\bgyncuus7.output\" -Tail 25)",
+      "PowerShell($r = Invoke-WebRequest -Uri \"https://enjoyed-causes-border-toxic.trycloudflare.com/\" -UseBasicParsing -TimeoutSec 30; $r.StatusCode; if \\($r.Content -match 'FITME'\\) { \"OK: FITME 페이지 서빙됨\" } else { \"본문에 FITME 없음:\"; $r.Content.Substring\\(0, [Math]::Min\\(300, $r.Content.Length\\)\\) })",
+      "PowerShell(Get-Process *)",
+      "PowerShell(git push *)",
+      "PowerShell(git *)",
+      "PowerShell(git status; \"=====\"; git describe --tags; \"=====\"; git log --oneline -1 origin/main)",
+      "PowerShell(Start-Sleep -Seconds 8; Select-String -Path \"C:\\\\Users\\\\htysp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--claude-code-FITME\\\\15bd1834-2210-4318-b32f-644c8a596c34\\\\tasks\\\\bf9m3stad.output\" -Pattern \"trycloudflare\\\\.com\" | ForEach-Object { $_.Line })",
+      "PowerShell($r = Invoke-WebRequest -Uri \"https://those-sheep-wed-then.trycloudflare.com/\" -UseBasicParsing -TimeoutSec 30; \"$\\($r.StatusCode\\) $\\(if \\($r.Content -match 'FITME'\\) { 'FITME 서빙 확인' } else { '본문 이상' }\\)\")",
+      "PowerShell(git status; \"===== log =====\"; git log --oneline -5; \"===== tags =====\"; git tag)"
     ]
   }
 }
