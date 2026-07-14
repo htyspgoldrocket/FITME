@@ -24,7 +24,10 @@
       "PowerShell(pip *)",
       "PowerShell(Start-Sleep -Seconds 4; $h = Invoke-RestMethod -Uri \"http://localhost:8000/health\" -TimeoutSec 10; \"health: $\\($h | ConvertTo-Json -Compress\\)\"; $body = @{ image = @{ base64 = \"dGVzdA==\"; width = 1080; height = 1440; mimeType = \"image/jpeg\"; rotation = 0 }; mode = \"simple\" } | ConvertTo-Json -Depth 5; $r = Invoke-RestMethod -Uri \"http://localhost:8000/analyze\" -Method Post -ContentType \"application/json\" -Body $body -TimeoutSec 10; $r | ConvertTo-Json -Depth 5)",
       "PowerShell($wc = New-Object System.Net.WebClient; $wc.Headers.Add\\(\"Content-Type\",\"application/json\"\\); $bytes = $wc.UploadData\\(\"http://localhost:8000/analyze\", \"POST\", [System.Text.Encoding]::UTF8.GetBytes\\('{\"image\":{\"base64\":\"dGVzdA==\",\"width\":1080,\"height\":1440,\"mimeType\":\"image/jpeg\",\"rotation\":0},\"mode\":\"precise\"}'\\)\\); $json = [System.Text.Encoding]::UTF8.GetString\\($bytes\\); $json.Substring\\($json.Length - 120\\); \"=====\"; try { Invoke-RestMethod -Uri \"http://localhost:8000/analyze\" -Method Post -ContentType \"application/json\" -Body '{\"mode\":\"simple\"}' -TimeoutSec 10 } catch { \"검증 에러 상태코드: $\\($_.Exception.Response.StatusCode.value__\\)\" })",
-      "PowerShell(git status; \"===== log =====\"; git log --oneline -5)"
+      "PowerShell(git status; \"===== log =====\"; git log --oneline -5)",
+      "PowerShell(C:\\\\claude_code\\\\FITME\\\\server\\\\venv\\\\Scripts\\\\python.exe \"C:\\\\Users\\\\htysp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--claude-code-FITME\\\\15bd1834-2210-4318-b32f-644c8a596c34\\\\scratchpad\\\\debug_detect.py\")",
+      "PowerShell(C:\\\\claude_code\\\\FITME\\\\server\\\\venv\\\\Scripts\\\\python.exe \"C:\\\\Users\\\\htysp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--claude-code-FITME\\\\15bd1834-2210-4318-b32f-644c8a596c34\\\\scratchpad\\\\debug_detect2.py\")",
+      "PowerShell(C:\\\\claude_code\\\\FITME\\\\server\\\\venv\\\\Scripts\\\\python.exe \"C:\\\\Users\\\\htysp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--claude-code-FITME\\\\15bd1834-2210-4318-b32f-644c8a596c34\\\\scratchpad\\\\debug_detect3.py\")"
     ]
   }
 }
