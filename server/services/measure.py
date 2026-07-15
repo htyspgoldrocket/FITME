@@ -90,6 +90,120 @@ def compute_scale(reference: dict) -> dict:
     }
 
 
+# ==================== Step 2-6: 랜드마크 → 8개 치수(cm) ====================
+
+# ----- 둘레 타원 근사 계수 (전략 2) -----
+# 원리: 정면 사진에는 몸통의 "너비"만 보이므로, 단면을 타원으로 가정하고
+#   깊이(전후) = 너비 × 계수,  둘레 ≈ π × (너비 + 깊이) / 2   (CLAUDE.md 3장)
+# 계수 근거: 성인 몸통 단면의 깊이/너비 비율은 인체측정 통계에서
+#   가슴 ≈ 0.70~0.75, 허리 ≈ 0.75~0.80, 엉덩이 ≈ 0.68~0.72 수준.
+#   초기값은 그 중앙값. ⚠️ 실측 비교로 조정할 때는 1명에 과적합하지 말고
+#   반드시 3명분으로 재검증한다 (CLAUDE.md 13-2).
+DEPTH_RATIOS = {
+    "chest": 0.72,
+    "waist": 0.78,
+    "hip": 0.70,
+}
+
+# ----- 상식 범위 (cm) — 벗어나면 경고 + 해당 항목 신뢰도 low -----
+PLAUSIBLE_RANGES_CM = {
+    "height": (140.0, 210.0),
+    "shoulder_width": (30.0, 55.0),
+    "chest_circumference": (70.0, 140.0),
+    "waist_circumference": (55.0, 140.0),
+    "hip_circumference": (70.0, 140.0),
+    "arm_length": (40.0, 75.0),
+    "inseam": (55.0, 95.0),
+    "torso_length": (40.0, 75.0),
+}
+
+# 단일 프레임 기준 초기 신뢰도. 길이는 직접 측정이라 medium,
+# 둘레는 타원 "근사"라 low. 다중 프레임·해부학 비율 검증(2-7)에서 재조정된다.
+_BASE_CONFIDENCE = {
+    "height": "medium",
+    "shoulder_width": "medium",
+    "arm_length": "medium",
+    "inseam": "medium",
+    "torso_length": "medium",
+    "chest_circumference": "low",
+    "waist_circumference": "low",
+    "hip_circumference": "low",
+}
+
+
+def ellipse_circumference_mm(width_mm: float, depth_ratio: float) -> float:
+    """정면 너비(mm) → 타원 근사 둘레(mm). 둘레 ≈ π × (너비 + 깊이) / 2."""
+    depth_mm = width_mm * depth_ratio
+    return float(np.pi * (width_mm + depth_mm) / 2.0)
+
+
+def landmarks_to_measurements(
+    landmarks: dict, scale: dict, mode: str, reference: dict
+) -> tuple[dict, list[str]]:
+    """15개 랜드마크(2-5) × 척도(2-4) → BodyMeasurements 형태의 dict.
+
+    매핑 (claude_vision.py의 랜드마크 정의와 1:1):
+      키:        head_top ↔ 발뒤꿈치 중점        (직접 거리)
+      어깨너비:  left_shoulder ↔ right_shoulder  (직접 거리)
+      팔길이:    left_shoulder ↔ left_wrist      (직접 거리)
+      다리안쪽:  crotch ↔ left_ankle             (직접 거리)
+      상체길이:  neck_base ↔ crotch              (직접 거리)
+      가슴/허리/엉덩이 둘레: 좌우 실루엣 너비 → 타원 근사
+
+    반환: (measurements dict, warnings 리스트).
+    상식 범위를 벗어난 항목은 warnings에 기록되고 confidence가 low로 강등된다.
+    """
+    missing = [k for k in (
+        "head_top", "neck_base", "left_shoulder", "right_shoulder",
+        "chest_left", "chest_right", "waist_left", "waist_right",
+        "hip_left", "hip_right", "left_wrist", "crotch",
+        "left_ankle", "left_heel", "right_heel",
+    ) if k not in landmarks]
+    if missing:
+        raise ValueError(f"랜드마크 누락: {missing}")
+
+    heel_mid = [
+        (landmarks["left_heel"][0] + landmarks["right_heel"][0]) / 2.0,
+        (landmarks["left_heel"][1] + landmarks["right_heel"][1]) / 2.0,
+    ]
+
+    def dist_cm(p1, p2) -> float:
+        return distance_mm(scale, p1, p2) / 10.0
+
+    values = {
+        "height": dist_cm(landmarks["head_top"], heel_mid),
+        "shoulder_width": dist_cm(landmarks["left_shoulder"], landmarks["right_shoulder"]),
+        "arm_length": dist_cm(landmarks["left_shoulder"], landmarks["left_wrist"]),
+        "inseam": dist_cm(landmarks["crotch"], landmarks["left_ankle"]),
+        "torso_length": dist_cm(landmarks["neck_base"], landmarks["crotch"]),
+        "chest_circumference": ellipse_circumference_mm(
+            distance_mm(scale, landmarks["chest_left"], landmarks["chest_right"]),
+            DEPTH_RATIOS["chest"]) / 10.0,
+        "waist_circumference": ellipse_circumference_mm(
+            distance_mm(scale, landmarks["waist_left"], landmarks["waist_right"]),
+            DEPTH_RATIOS["waist"]) / 10.0,
+        "hip_circumference": ellipse_circumference_mm(
+            distance_mm(scale, landmarks["hip_left"], landmarks["hip_right"]),
+            DEPTH_RATIOS["hip"]) / 10.0,
+    }
+
+    confidence = dict(_BASE_CONFIDENCE)
+    warnings: list[str] = []
+    for key, value in values.items():
+        lo, hi = PLAUSIBLE_RANGES_CM[key]
+        if not (lo <= value <= hi):
+            warnings.append(f"{key}={value:.1f}cm 이(가) 상식 범위({lo}~{hi}cm)를 벗어남")
+            confidence[key] = "low"
+
+    measurements = {
+        **{k: round(v, 1) for k, v in values.items()},
+        "confidence": confidence,
+        "mode": mode,
+        "reference": reference,
+    }
+    return measurements, warnings
+
+
 def points_px_to_plane_mm(scale: dict, points_px: list | np.ndarray) -> np.ndarray:
     """이미지 px 좌표들을 기준물 평면 mm 좌표로 변환한다 (원근 제거).
 
