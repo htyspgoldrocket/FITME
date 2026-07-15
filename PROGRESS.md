@@ -6,13 +6,13 @@
 
 - **Phase 1: ✅ 완료 + 수정 재검증 완료** (2026-07-14, Gate 통과, 태그 `phase-1-complete`)
   - Gate 리포트(수정 이력 포함): `docs/gate-reports/phase-1-gate.md`
-- **Phase 2: 🔄 진행 중 — Step 2-4 완료** (2026-07-15, 합성 검증 통과 + fixture 정리)
-- **다음 시작 지점: Step 2-5 — Claude Vision 신체 부위 좌표 추출**
-  - 만들 것: `server/services/claude_vision.py` — 신체 8부위 픽셀 좌표 추출,
-    `temperature:0`, JSON 방어(코드펜스 제거+정규식+1회 재요청, 그룹 B-5)
-  - **API 키 필요**: `server/.env`의 `ANTHROPIC_API_KEY` 로드 확인부터
-    (키 값은 읽지 말고 로드 여부만). anthropic SDK 0.18.1 설치됨
-  - OpenCV(척도)와 Claude Vision(부위 인식)의 역할 분담 유지 (4-4 vision 원칙)
+- **Phase 2: 🔄 진행 중 — Step 2-5 완료** (2026-07-15, 실사진 좌표 추출 + 육안 검증)
+- **다음 시작 지점: Step 2-6 — 척도 적용 부위별 cm 산출 + 둘레 타원 근사 (전략 2)**
+  - 만들 것: `measure.py` 확장 — 15개 랜드마크 × 호모그래피 척도 → 8개 치수(cm),
+    정면 너비 → 타원 계수로 둘레(가슴/허리/엉덩이) 근사
+  - 검증: 상식 범위 자동 검사(키 140~210 등) + **실측 비교 시작** (person01_truth.json
+    필요 — 줄자 실측값, fixtures/README.md 템플릿)
+  - ⚠️ 미결 질문 15번(1080px에서 ±3cm 가능한가)이 여기서 숫자로 판명됨
 
 ## Phase 2 Step 완료 이력
 
@@ -100,6 +100,26 @@
 
 **관련 커밋**: `f87bd01`
 
+### Step 2-5 — Claude Vision 신체 부위 좌표 추출 (2026-07-15 완료)
+
+**만든 파일**
+- `server/services/claude_vision.py` — `extract_body_landmarks(base64, w, h)`:
+  **15개 랜드마크** 픽셀 좌표 추출 (head_top, neck_base, 어깨×2, 가슴/허리/
+  엉덩이 실루엣 가장자리×각2, left_wrist, crotch, left_ankle, 발뒤꿈치×2).
+  좌표는 `measure.distance_mm()`에 바로 입력 가능한 [x,y] 형태.
+- **랜드마크 → 8개 치수(BodyMeasurements) 매핑은 2-6 몫** (여기서 안 함)
+
+**JSON 방어 (그룹 B-5)**
+- 코드펜스 제거 → 정규식 `{}` 추출 → 스키마 검증(15키 전부, [x,y] 숫자,
+  이미지 범위 내) → 실패 시 **1회만** 재요청 (무한루프 금지)
+
+**검증**
+- 1080px fixture(person01_aruco.jpg)로 실제 호출 — 15개 지점 전부 올바른
+  부위에 찍힘 (debug_landmarks_person01_aruco.jpg 육안 확인, 좌우 규약 준수)
+- API 사용량: 총 2회 (키 확인 핑 1 + 좌표 추출 1)
+
+**관련 커밋**: `7f29107`
+
 **fixture 2종 체계 (2026-07-15 정리, 로컬 전용)**
 - `person01_aruco.jpg` = 3000×4000 원본 → **폭 1080px 리사이즈 + JPEG 85%**
   (image.ts와 동일 방식) — **실전 조건, 기본 테스트용**
@@ -167,7 +187,7 @@
 ## Phase 2 남은 계획 (Step 분해는 2026-07-14 사용자 승인됨)
 
 - ~~2-1 FastAPI~~ ✅ → ~~2-2 카드~~ ✅ → ~~2-3 ArUco~~ ✅ → ~~2-4 호모그래피~~ ✅
-  → **2-5 Claude Vision(다음 — API 키 필요, `server/.env`)** → 2-6 cm 산출·타원 근사
+  → ~~2-5 Claude Vision~~ ✅ → **2-6 cm 산출·타원 근사(다음)**
   → 2-7 다중 프레임·신뢰도 → 2-8 프론트 연결
 - **사전 준비물 (사용자에게 요청할 것)**: 카드 포함 전신 사진 + 줄자 실측 정답값,
   **최소 3명분** (`server/tests/fixtures/`에 보관). 2-2 개발에는 우선 1장이면 시작 가능.
@@ -233,6 +253,15 @@
    ③ 스트림 4K 요청(지원 기기 한정).
 16. **남은 정리**: 카드 사진(person01_card.jpg, 1206px)도 2-6 간편 모드 검증
    전까지 원본 확보 → 1080px+원본 2종으로 정리할 것.
+17. ★ **현행 Claude 모델은 temperature 파라미터 미지원** (Opus 4.7 이후 제거,
+   보내면 400 — 실제 겪음). 편차 억제는 결정적 프롬프트 + 다중 프레임
+   중앙값(2-7)이 담당. CLAUDE.md 그룹 B-6도 이에 맞게 갱신됨 (2026-07-15).
+18. ★ **메모장으로 .env 저장 시 UTF-8 BOM이 붙어 키 로드 실패** → 로더를
+   utf-8-sig로 처리해 해결 (claude_vision.py `_load_api_key`).
+19. **사용 모델: claude-opus-4-8** — 부위 인식 품질이 측정 정확도를 좌우하므로
+   상위 모델 사용. 환경변수 FITME_VISION_MODEL로 교체 가능.
+20. **좌표 결과는 fixtures/person01_aruco.landmarks.json에 캐시** — CLI 재실행
+   시 추가 API 호출 없음 (`--fresh` 옵션으로만 재호출). 개발 중 비용 절약 패턴.
 
 ## 주의사항 / 배운 것 (Phase 1 수정에서)
 
