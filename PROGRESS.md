@@ -15,6 +15,20 @@
     제외(혼자 측정 불가). 옷 입은 상태 실측(21번 방침 준수). 로컬 전용(gitignore).
   - ⚠️ 미결 질문 15번(1080px에서 ±3cm 가능한가)이 여기서 숫자로 판명됨
 
+## 로컬 전용 자산 (GitHub에 없음 — PC 이동 시 이 목록만 신경 쓰면 됨)
+
+| 자산 | 복구 가능성 |
+|------|-------------|
+| `server/tests/fixtures/person01_card.jpg` (1206px) | ❌ 재촬영/폰 재복사 필요 — **개인 클라우드 백업 권장** |
+| `server/tests/fixtures/person01_aruco.jpg` (1080px 실전 조건) | △ 원본에서 재생성 가능 (아래 원본 필요) |
+| `server/tests/fixtures/person01_aruco_original.jpg` (3000×4000) | ❌ 재촬영/폰 재복사 필요 — **백업 권장** |
+| `server/tests/fixtures/person01_truth.json` (실측값, 옷 입은 상태) | △ 숫자만 다시 입력하면 됨 (재실측 불필요, 값은 본인이 앎) |
+| `server/tests/fixtures/person01_aruco.landmarks.json` (좌표 캐시) | ✅ API 1회 호출로 재생성 (`--fresh`) |
+| `server/tests/fixtures/debug_*.jpg` (확인용 이미지) | ✅ 전부 재생성 가능 |
+| `server/.env` (ANTHROPIC_API_KEY) | ✅ 키 1줄 재입력 (유출 의심 시 콘솔에서 재발급) |
+| `server/venv` | ✅ `python -m venv venv` + `pip install -r requirements.txt` |
+| `node_modules` | ✅ `npm install` |
+
 ## Phase 2 Step 완료 이력
 
 ### Step 2-1 — FastAPI 스캐폴딩 + /analyze 더미 (2026-07-14 완료)
