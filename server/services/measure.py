@@ -95,17 +95,28 @@ def compute_scale(reference: dict) -> dict:
 # ----- 둘레 타원 근사 계수 (전략 2) -----
 # 원리: 정면 사진에는 몸통의 "너비"만 보이므로, 단면을 타원으로 가정하고
 #   깊이(전후) = 너비 × 계수,  둘레 ≈ π × (너비 + 깊이) / 2   (CLAUDE.md 3장)
-# 계수 정책 (2026-07-16, CLAUDE.md 13-2): 역산 캘리브레이션은 밀착 의류
-#   기준 데이터 확보 후 수행한다. person01 반바지 데이터는 보정 기준이 아니라
-#   파이프라인 확인 + 나쁜 조건 엣지 케이스용이다 (역할 재정의). 문헌 인용은
-#   배제 — 우리 조건(마커 기반·옷 위 측정·정면 너비→둘레)에 맞는 연구가 없어
-#   어정쩡한 인용은 "검증된 척" 착각을 만든다 (규칙 1). 아래 값은 역산 전
-#   임시값이며, 절대 정확도는 미검증 상태다 (알려진 한계 — CLAUDE.md 12장).
+#
+# 계수 출처 (2-7b 역산, 2026-07-16): person01 v2(밀착 의류·기하학적 최적 기준
+#   사진)의 A척도(키 캘리브레이션) 폭 원자료 × truth_v2 실측 둘레에서 역산.
+#   d = 2×실측둘레/(π×폭) − 1, 여기서 person01의 BMI 26.6 구간 가감(+0.05,
+#   BMI_DEPTH_ADJUST)을 제외한 base 값. 역산 스크립트: scripts/verify_27b.py.
+# ⚠️ 표본 1명(person01) 역산값 — 일반화 미검증. 절대 정확도는 알려진 한계
+#   (CLAUDE.md 12장). 문헌 인용 배제 정책(13-2) 유지. 편향 일정성 가정의 실질
+#   검증은 Phase 4 수동 검증(아는 옷 대조)이 담당.
+# ⚠️ waist가 1.0 근처(깊이≈너비)인 것은 natural waist 폭 랜드마크가 실제 최대
+#   허리 폭보다 좁게 찍히는 정의 문제를 흡수한 값일 수 있음 — 옵션 A(허리 정의
+#   변경) 적용 후 재역산 필요할 수 있다.
 DEPTH_RATIOS = {
-    "chest": 0.72,
-    "waist": 0.78,
-    "hip": 0.70,
+    "chest": 0.7681,
+    "waist": 0.9740,
+    "hip": 0.8331,
 }
+
+# ----- 정의 보정 계수 (전략 2 — 줄자 곡면 vs 카메라 직선 투영) -----
+# 어깨: 줄자는 어깨 곡면을 따라 재지만 카메라는 직선 투영 폭만 본다.
+# person01 v2 A척도 역산: 46.0cm(실측) / 38.907cm(측정) = 1.1823.
+# ⚠️ 표본 1명 역산값 — 일반화 미검증 (위 DEPTH_RATIOS 주석과 동일 정책).
+SHOULDER_CURVE_COEF = 1.1823
 
 # ----- 상식 범위 (cm) — 벗어나면 경고 + 해당 항목 신뢰도 low -----
 PLAUSIBLE_RANGES_CM = {
@@ -140,7 +151,11 @@ def ellipse_circumference_mm(width_mm: float, depth_ratio: float) -> float:
 
 
 def landmarks_to_measurements(
-    landmarks: dict, scale: dict, mode: str, reference: dict
+    landmarks: dict, scale: dict, mode: str, reference: dict,
+    *,
+    length_mm_per_px: float | None = None,
+    width_mm_per_px: float | None = None,
+    depth_ratios: dict | None = None,
 ) -> tuple[dict, list[str]]:
     """15개 랜드마크(2-5) × 척도(2-4) → BodyMeasurements 형태의 dict.
 
@@ -151,6 +166,12 @@ def landmarks_to_measurements(
       다리안쪽:  crotch ↔ left_ankle             (직접 거리)
       상체길이:  neck_base ↔ crotch              (직접 거리)
       가슴/허리/엉덩이 둘레: 좌우 실루엣 너비 → 타원 근사
+
+    척도 선택 (2-7b): length_mm_per_px / width_mm_per_px 를 주면 해당 그룹
+    (길이 = 키·팔·다리안쪽·상체 / 폭 = 어깨·둘레 3종)을 **스칼라 척도**로 잰다.
+    None이면 기존 호모그래피 경로(2-4) — 단 v3 실증(원거리 외삽 폭주)에 따라
+    신규 코드는 스칼라 척도 사용을 권장. depth_ratios 로 타원 깊이 계수를
+    교체할 수 있다 (BMI 보정 — bmi_depth_ratios() 반환값. None이면 기본값).
 
     반환: (measurements dict, warnings 리스트).
     상식 범위를 벗어난 항목은 warnings에 기록되고 confidence가 low로 강등된다.
@@ -169,24 +190,35 @@ def landmarks_to_measurements(
         (landmarks["left_heel"][1] + landmarks["right_heel"][1]) / 2.0,
     ]
 
-    def dist_cm(p1, p2) -> float:
-        return distance_mm(scale, p1, p2) / 10.0
+    ratios = depth_ratios if depth_ratios is not None else DEPTH_RATIOS
+
+    def length_mm(p1, p2) -> float:
+        if length_mm_per_px is not None:
+            return scalar_distance_mm(length_mm_per_px, p1, p2)
+        return distance_mm(scale, p1, p2)
+
+    def width_mm(p1, p2) -> float:
+        if width_mm_per_px is not None:
+            return scalar_distance_mm(width_mm_per_px, p1, p2)
+        return distance_mm(scale, p1, p2)
 
     values = {
-        "height": dist_cm(landmarks["head_top"], heel_mid),
-        "shoulder_width": dist_cm(landmarks["left_shoulder"], landmarks["right_shoulder"]),
-        "arm_length": dist_cm(landmarks["left_shoulder"], landmarks["left_wrist"]),
-        "inseam": dist_cm(landmarks["crotch"], landmarks["left_ankle"]),
-        "torso_length": dist_cm(landmarks["neck_base"], landmarks["crotch"]),
+        "height": length_mm(landmarks["head_top"], heel_mid) / 10.0,
+        "shoulder_width": width_mm(
+            landmarks["left_shoulder"], landmarks["right_shoulder"])
+            / 10.0 * SHOULDER_CURVE_COEF,
+        "arm_length": length_mm(landmarks["left_shoulder"], landmarks["left_wrist"]) / 10.0,
+        "inseam": length_mm(landmarks["crotch"], landmarks["left_ankle"]) / 10.0,
+        "torso_length": length_mm(landmarks["neck_base"], landmarks["crotch"]) / 10.0,
         "chest_circumference": ellipse_circumference_mm(
-            distance_mm(scale, landmarks["chest_left"], landmarks["chest_right"]),
-            DEPTH_RATIOS["chest"]) / 10.0,
+            width_mm(landmarks["chest_left"], landmarks["chest_right"]),
+            ratios["chest"]) / 10.0,
         "waist_circumference": ellipse_circumference_mm(
-            distance_mm(scale, landmarks["waist_left"], landmarks["waist_right"]),
-            DEPTH_RATIOS["waist"]) / 10.0,
+            width_mm(landmarks["waist_left"], landmarks["waist_right"]),
+            ratios["waist"]) / 10.0,
         "hip_circumference": ellipse_circumference_mm(
-            distance_mm(scale, landmarks["hip_left"], landmarks["hip_right"]),
-            DEPTH_RATIOS["hip"]) / 10.0,
+            width_mm(landmarks["hip_left"], landmarks["hip_right"]),
+            ratios["hip"]) / 10.0,
     }
 
     confidence = dict(_BASE_CONFIDENCE)
@@ -289,6 +321,26 @@ def check_symmetry(landmarks: dict) -> list[str]:
     return warnings
 
 
+def median_and_stable_spread(runs_values: list[dict]) -> tuple[dict, dict]:
+    """반복 측정값 → (항목별 중앙값, 신뢰도용 편차).
+
+    신뢰도용 편차는 "보고되는 값(중앙값)"의 안정성이어야 한다.
+    N≥5이면 연속 3개 묶음의 중앙값들 산포(중앙값 추정치의 반복 편차)를 쓰고,
+    표본이 적으면 원시 산포(max-min)를 그대로 쓴다 (보수적).
+    """
+    median, raw_spread = aggregate_runs(runs_values)
+    if len(runs_values) >= 5:
+        groups = [runs_values[i:i + 3] for i in range(len(runs_values) - 2)]
+        group_medians = [aggregate_runs(g)[0] for g in groups]
+        spread = {
+            k: float(max(gm[k] for gm in group_medians) - min(gm[k] for gm in group_medians))
+            for k in PLAUSIBLE_RANGES_CM
+        }
+    else:
+        spread = raw_spread
+    return median, spread
+
+
 def aggregate_runs(runs_values: list[dict]) -> tuple[dict, dict]:
     """반복 측정값 목록 → (항목별 중앙값, 항목별 편차 max-min)."""
     if not runs_values:
@@ -326,36 +378,51 @@ def _confidence_level(key: str, spread_cm: float, marker_width_px: float,
 
 
 def measure_with_statistics(
-    landmark_runs: list[dict], scale: dict, mode: str, reference: dict
+    landmark_runs: list[dict], scale: dict, mode: str, reference: dict,
+    profile: dict | None = None,
 ) -> dict:
     """여러 번 추출한 랜드마크(2-5)로 측정을 반복하고 통계로 합친다 (전략 3).
 
     landmark_runs: extract_body_landmarks() 결과 N개 (프레임별 또는 반복 호출분).
+    profile: UserProfile dict {"heightCm": float, "weightKg": float|None} (2-7b).
+
+    척도 선택 (2-7b A안 확정 — v1/v2/v3 검증으로 결정, verify_27b.py):
+      몸 측정은 항상 **스칼라 척도** (호모그래피 원거리 외삽은 v3 폭주 실증으로 폐기).
+      - profile 있음 → 키 캘리브레이션 척도(주 경로) + 마커와 교차 검증(r 판정)
+        + BMI 둘레 깊이 보정. r이 suspect(>20%)면 전 항목 신뢰도 1단계 강등.
+      - profile 없음 → 마커 스칼라 (2-8에서 키 입력 UI 연결 전의 폴백)
+
     반환: {
       "measurements": BodyMeasurements 형태 (중앙값 + 통계 기반 confidence),
-      "warnings":     상식 범위 + 해부학 비율 경고,
-      "stats":        {"runs": N, "spreadCm": 항목별 반복 편차}
+      "warnings":     상식 범위 + 해부학 비율 + 척도 불일치 경고,
+      "stats":        {"runs": N, "spreadCm": 항목별 반복 편차,
+                       "scale": 사용 척도 요약 (역추적용)}
     }
     """
+    marker_mpp = scale["mmPerPx"]
+    scale_warnings: list[str] = []
+    agreement = None
+    if profile is not None:
+        height_cm = float(profile["heightCm"])
+        height_scale = height_scale_from_runs(landmark_runs, height_cm)
+        body_mpp = height_scale["mmPerPx"]
+        agreement = check_scale_agreement(body_mpp, marker_mpp)
+        scale_warnings.extend(agreement["warnings"])
+        ratios = bmi_depth_ratios(height_cm, profile.get("weightKg"))
+    else:
+        body_mpp = marker_mpp
+        ratios = None
+
     runs_values = []
     for lm in landmark_runs:
-        m, _ = landmarks_to_measurements(lm, scale, mode, reference)
+        m, _ = landmarks_to_measurements(
+            lm, scale, mode, reference,
+            length_mm_per_px=body_mpp, width_mm_per_px=body_mpp,
+            depth_ratios=ratios,
+        )
         runs_values.append({k: m[k] for k in PLAUSIBLE_RANGES_CM})
 
-    median, raw_spread = aggregate_runs(runs_values)
-
-    # 신뢰도용 편차는 "보고되는 값(중앙값)"의 안정성이어야 한다.
-    # N≥5이면 연속 3개 묶음의 중앙값들 산포(중앙값 추정치의 반복 편차)를 쓰고,
-    # 표본이 적으면 원시 산포를 그대로 쓴다 (보수적).
-    if len(runs_values) >= 5:
-        groups = [runs_values[i:i + 3] for i in range(len(runs_values) - 2)]
-        group_medians = [aggregate_runs(g)[0] for g in groups]
-        spread = {
-            k: float(max(gm[k] for gm in group_medians) - min(gm[k] for gm in group_medians))
-            for k in PLAUSIBLE_RANGES_CM
-        }
-    else:
-        spread = raw_spread
+    median, spread = median_and_stable_spread(runs_values)
 
     trace = scale["trace"]
     tilt_ratio = trace["mmPerPxWidth"] / trace["mmPerPxHeight"]
@@ -388,17 +455,138 @@ def measure_with_statistics(
         for key in _SYMMETRY_AFFECTED_KEYS:
             confidence[key] = _LEVEL_DOWN[confidence[key]]
 
+    # 척도 불일치 (2-7b): suspect(키 입력 오류·마커 배율 오류 의심)면
+    # 척도 자체를 못 믿으므로 전 항목 신뢰도를 1단계 강등한다.
+    warnings.extend(scale_warnings)
+    if agreement is not None and agreement["level"] == "suspect":
+        for key in confidence:
+            confidence[key] = _LEVEL_DOWN[confidence[key]]
+
     measurements = {
         **{k: round(v, 1) for k, v in median.items()},
         "confidence": confidence,
         "mode": mode,
         "reference": reference,
     }
+    stats_scale = {
+        "markerMmPerPx": round(marker_mpp, 4),
+        "bodyMmPerPx": round(body_mpp, 4),
+        "source": "height" if profile is not None else "marker",
+    }
+    if agreement is not None:
+        stats_scale["agreementRatio"] = round(agreement["ratio"], 3)
+        stats_scale["agreementLevel"] = agreement["level"]
     return {
         "measurements": measurements,
         "warnings": warnings,
-        "stats": {"runs": len(runs_values), "spreadCm": {k: round(v, 2) for k, v in spread.items()}},
+        "stats": {
+            "runs": len(runs_values),
+            "spreadCm": {k: round(v, 2) for k, v in spread.items()},
+            "scale": stats_scale,
+        },
     }
+
+
+# ========== Step 2-7b: 키 캘리브레이션 · 스칼라 척도 · BMI 둘레 보정 ==========
+#
+# v3 실증 (2026-07-16, PROGRESS 배운 것 29번): 마커 코너의 서브픽셀 노이즈가
+# 호모그래피 원근 성분으로 흡수되면 원거리 외삽에서 폭주한다 (v3 키 +70.8cm).
+# → 몸 측정은 스칼라 척도만 사용한다. 호모그래피는 마커 근방(기울기 판정,
+#   /check-photo) 전용으로 남긴다.
+#
+# 두 척도의 역할 분담 (2-7b 설계, 사용자 승인):
+#   마커 스칼라(mmPerPx)  = 검출·위치·기울기 판정 + 키 척도의 교차 검증
+#                           (+ 폭 측정 후보 — 마커와 같은 깊이 평면)
+#   키 척도               = 전신 길이 측정의 주 척도 (사용자 입력 heightCm 기준)
+
+SCALE_AGREE_OK = 0.05    # |r-1| ≤ 5%: 두 척도 일치(정상) — 근거: 추정
+SCALE_AGREE_WARN = 0.20  # ≤20%: 깊이 편향(정보성 경고) / 초과: 입력·마커 의심 — 추정
+
+
+def scalar_distance_mm(mm_per_px: float, p1_px, p2_px) -> float:
+    """스칼라 척도 거리: 픽셀 유클리드 거리 × mm/px (호모그래피 미사용)."""
+    d = np.asarray(p1_px, dtype=np.float64) - np.asarray(p2_px, dtype=np.float64)
+    return float(np.linalg.norm(d) * mm_per_px)
+
+
+def height_scale_from_runs(landmark_runs: list[dict], height_cm: float) -> dict:
+    """키 캘리브레이션 척도 — 사용자 입력 키(cm)로 전신 스케일을 확정한다.
+
+    head_top ↔ 발뒤꿈치 중점의 픽셀 거리(런별 계산 후 **중앙값**)를 키와 대응.
+    사진당 척도 1개로 고정한다 — 런별로 따로 캘리브레이션하면 head/heel 좌표
+    노이즈가 전 항목에 전파되므로 중앙값 고정이 안정적 (2-7b 설계).
+    """
+    if height_cm <= 0:
+        raise ValueError(f"키 입력이 유효하지 않습니다: {height_cm}cm")
+    if not landmark_runs:
+        raise ValueError("랜드마크 런이 비어 있습니다")
+    px_list = []
+    for lm in landmark_runs:
+        heel_mid = [
+            (lm["left_heel"][0] + lm["right_heel"][0]) / 2.0,
+            (lm["left_heel"][1] + lm["right_heel"][1]) / 2.0,
+        ]
+        d = np.asarray(lm["head_top"], dtype=np.float64) - np.asarray(heel_mid)
+        px_list.append(float(np.linalg.norm(d)))
+    head_heel_px = float(np.median(px_list))
+    if head_heel_px <= 0:
+        raise ValueError("head_top↔heel 픽셀 거리가 0입니다")
+    return {
+        "mmPerPx": height_cm * 10.0 / head_heel_px,
+        "trace": {
+            "heightCm": height_cm,
+            "headHeelPx": head_heel_px,
+            "runs": len(landmark_runs),
+        },
+    }
+
+
+def check_scale_agreement(height_mm_per_px: float, marker_mm_per_px: float) -> dict:
+    """두 척도 불일치 판정. r = 키 척도 ÷ 마커 스칼라.
+
+    반환: {"ratio", "level": ok|depth_bias|suspect, "warnings": [...]}
+      ok         |r-1| ≤ 5%  — 정상
+      depth_bias ≤ 20%       — 마커 평면(가슴)과 머리·발의 깊이 차 (정보성.
+                               측정은 유효 — 항목별 척도가 각자 올바른 평면 기준)
+      suspect    > 20%       — 키 입력 오류 또는 마커 출력 크기 오류 의심
+                               → 호출측은 전 항목 신뢰도 1단계 강등할 것
+    임계는 전부 추정 (13-2 문헌 배제 정책 — v1 r≈1.12, v2 r≈1.01 실측이 참고 근거).
+    """
+    r = height_mm_per_px / marker_mm_per_px
+    dev = abs(r - 1.0)
+    if dev <= SCALE_AGREE_OK:
+        return {"ratio": r, "level": "ok", "warnings": []}
+    if dev <= SCALE_AGREE_WARN:
+        return {"ratio": r, "level": "depth_bias", "warnings": [
+            f"척도 불일치 {dev:.0%} (키 척도/마커 척도={r:.3f}) — 마커 평면과 "
+            "머리·발의 깊이 차이로 추정. 더 멀리서 촬영하면 줄어듭니다"
+        ]}
+    return {"ratio": r, "level": "suspect", "warnings": [
+        f"척도 불일치 {dev:.0%} (키 척도/마커 척도={r:.3f}) — 키 입력 오류 또는 "
+        "마커 출력 크기 오류 의심. 키 입력값과 마커 100% 배율 출력을 확인하세요"
+    ]}
+
+
+# BMI 구간별 타원 깊이 계수 가감 — 근거: 추정 (13-2 문헌 배제. 마른 체형은
+# 단면이 납작하고 BMI가 높을수록 전후로 깊어진다는 상식 수준의 방향성만 반영).
+# (BMI 상한, 깊이 계수 가감) — weightKg 없으면 적용하지 않는다.
+BMI_DEPTH_ADJUST = [
+    (18.5, -0.05),
+    (25.0, 0.0),
+    (30.0, +0.05),
+    (float("inf"), +0.10),
+]
+
+
+def bmi_depth_ratios(height_cm: float, weight_kg: float | None) -> dict:
+    """BMI로 타원 깊이 계수를 조정한 사본을 반환. weight_kg가 None이면 기본값."""
+    if weight_kg is None:
+        return dict(DEPTH_RATIOS)
+    if height_cm <= 0 or weight_kg <= 0:
+        raise ValueError(f"키/몸무게 입력이 유효하지 않습니다: {height_cm}cm, {weight_kg}kg")
+    bmi = weight_kg / (height_cm / 100.0) ** 2
+    adjust = next(adj for upper, adj in BMI_DEPTH_ADJUST if bmi < upper)
+    return {k: v + adjust for k, v in DEPTH_RATIOS.items()}
 
 
 def points_px_to_plane_mm(scale: dict, points_px: list | np.ndarray) -> np.ndarray:

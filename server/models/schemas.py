@@ -92,10 +92,18 @@ class PhotoCheckResult(BaseModel):
     reasons: list[str]         # 불충족 사유 (한국어, 사용자 안내용)
 
 
+# ===== 사용자 프로필 (정확도 보강 입력 — 2-6 결정, 2-7b 구현) =====
+class UserProfile(BaseModel):
+    heightCm: float            # 키(cm) — 스케일 캘리브레이션 기준값 (필수)
+    weightKg: Optional[float] = None  # 몸무게(kg) — 둘레 깊이 계수(BMI) 보정용 (선택)
+
+
 # ===== /analyze 요청 (Phase 2) =====
 class AnalyzeRequest(BaseModel):
     image: CapturedImage
     mode: MeasurementMode
+    # 2-8에서 프론트 입력 UI가 연결되기 전까지는 선택 필드 (기존 호출 규격 불파손)
+    profile: Optional[UserProfile] = None
 
 
 # ===== /check-photo 요청 (2-7c) =====
