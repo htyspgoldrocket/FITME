@@ -57,6 +57,13 @@ LANDMARK_KEYS = [
     "right_heel",
 ]
 
+# ⚠️ 허리 정의 (옵션 A, 2026-07-16 사용자 확정): "natural waist(배꼽 높이)"의 위치
+# 모호가 v1/v2/v3 전부에서 반복 편차 >2cm를 유발함이 실증되어(교란 변수 제거 완료,
+# PROGRESS 배운 것 29번), 가슴 높이와 엉덩이 높이의 **기하학적 세로 중간 지점**으로
+# 고정했다. 트레이드오프: 기하학적 중간점은 줄자의 "가장 잘록한 곳"과 다를 수 있음.
+# **일관성(반복 편차)을 위해 의도적으로 선택** — 절대값 차이는 허리 깊이 계수
+# 재역산으로 흡수한다 (measure.py DEPTH_RATIOS 주석 참조).
+# 이 정의를 바꾸면 기존 랜드마크 캐시가 무효화된다 (재추출 = 사진당 API 13회).
 _PROMPT_TEMPLATE = """\
 This is a full-body front photo of one person. Image size: {width}x{height} pixels.
 Locate these body landmarks and return ONLY a single JSON object. No explanation,
@@ -68,7 +75,9 @@ perspective (left = smaller x):
 - "neck_base": center of the neck base, on the shoulder line
 - "left_shoulder" / "right_shoulder": outermost point of each shoulder (acromion)
 - "chest_left" / "chest_right": body silhouette edges at chest (nipple) height
-- "waist_left" / "waist_right": body silhouette edges at natural waist (navel) height
+- "waist_left" / "waist_right": body silhouette edges at the FIXED vertical midpoint \
+between the chest (nipple) level and the widest hip level — i.e. y = (chest y + hip y) / 2. \
+This is a geometric level, NOT the narrowest point and NOT the navel
 - "hip_left" / "hip_right": body silhouette edges at the widest hip level
 - "left_wrist": center of the left wrist
 - "crotch": crotch point where the legs meet
