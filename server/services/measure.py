@@ -206,6 +206,143 @@ def landmarks_to_measurements(
     return measurements, warnings
 
 
+# ========== Step 2-7: 전략 3 — 다중 측정 중앙값 · 해부학 비율 · 신뢰도 ==========
+
+_CIRCUMFERENCE_KEYS = ("chest_circumference", "waist_circumference", "hip_circumference")
+
+# 해부학 비율 범위 — ⚠️ 근거: "추정"이다. 일반 성인 체형에 대한 상식 수준의
+# 넉넉한 범위이며 통계 문헌 인용이 아니다 (13-2 문헌 배제 정책과 일관).
+# 벗어나면 "측정이 잘못됐을 가능성이 높다"는 경고이지 절대 판정이 아니다.
+ANATOMY_RATIO_RANGES = {
+    ("arm_length", "height"): (0.26, 0.42),          # 팔(어깨~손목)/키 — 추정
+    ("shoulder_width", "height"): (0.18, 0.32),      # 어깨/키 — 추정
+    ("inseam", "height"): (0.30, 0.55),              # 다리안쪽/키 — 추정
+    ("torso_length", "height"): (0.26, 0.48),        # 상체(목~가랑이)/키 — 추정
+    ("waist_circumference", "hip_circumference"): (0.55, 1.15),  # 허리/엉덩이 — 추정
+}
+
+# 신뢰도 산정 기준 (모두 이 상수로 관리):
+SPREAD_HIGH_CM = 1.0        # 반복 편차 ≤1cm → high 후보
+SPREAD_MEDIUM_CM = 2.0      # ≤2cm → medium (Gate 기준과 동일), >2cm → low
+MIN_MARKER_WIDTH_PX = 40.0  # 마커가 이보다 작으면 척도 노이즈 증폭 → 한 단계 강등
+TILT_RATIO_RANGE = (0.90, 1.10)  # 가로/세로 척도 비가 벗어나면 기준물 기울어짐 → 강등
+
+_LEVEL_DOWN = {"high": "medium", "medium": "low", "low": "low"}
+
+
+def check_anatomy(values: dict) -> list[str]:
+    """해부학 비율 교차 검증 — 벗어난 조합을 경고 문자열로 반환."""
+    warnings = []
+    for (num_key, den_key), (lo, hi) in ANATOMY_RATIO_RANGES.items():
+        num, den = values.get(num_key), values.get(den_key)
+        if not num or not den:
+            continue
+        ratio = num / den
+        if not (lo <= ratio <= hi):
+            warnings.append(
+                f"해부학 비율 이상: {num_key}/{den_key}={ratio:.2f} "
+                f"(추정 정상범위 {lo}~{hi})"
+            )
+    return warnings
+
+
+def aggregate_runs(runs_values: list[dict]) -> tuple[dict, dict]:
+    """반복 측정값 목록 → (항목별 중앙값, 항목별 편차 max-min)."""
+    if not runs_values:
+        raise ValueError("측정 결과가 비어 있습니다")
+    keys = PLAUSIBLE_RANGES_CM.keys()
+    median = {
+        k: float(np.median([r[k] for r in runs_values])) for k in keys
+    }
+    spread = {
+        k: float(max(r[k] for r in runs_values) - min(r[k] for r in runs_values))
+        for k in keys
+    }
+    return median, spread
+
+
+def _confidence_level(key: str, spread_cm: float, marker_width_px: float,
+                      tilt_ratio: float, in_range: bool) -> str:
+    """항목별 신뢰도 산정. 기준: ① 반복 편차 ② 마커 크기 ③ 기준물 기울기 ④ 상식 범위."""
+    if spread_cm <= SPREAD_HIGH_CM:
+        level = "high"
+    elif spread_cm <= SPREAD_MEDIUM_CM:
+        level = "medium"
+    else:
+        level = "low"
+    if marker_width_px < MIN_MARKER_WIDTH_PX:
+        level = _LEVEL_DOWN[level]
+    if not (TILT_RATIO_RANGE[0] <= tilt_ratio <= TILT_RATIO_RANGE[1]):
+        level = _LEVEL_DOWN[level]
+    # 둘레는 타원 "근사"라 단일 사진에서는 high를 주지 않는다 (2-6 정책 유지)
+    if key in _CIRCUMFERENCE_KEYS and level == "high":
+        level = "medium"
+    if not in_range:
+        level = "low"
+    return level
+
+
+def measure_with_statistics(
+    landmark_runs: list[dict], scale: dict, mode: str, reference: dict
+) -> dict:
+    """여러 번 추출한 랜드마크(2-5)로 측정을 반복하고 통계로 합친다 (전략 3).
+
+    landmark_runs: extract_body_landmarks() 결과 N개 (프레임별 또는 반복 호출분).
+    반환: {
+      "measurements": BodyMeasurements 형태 (중앙값 + 통계 기반 confidence),
+      "warnings":     상식 범위 + 해부학 비율 경고,
+      "stats":        {"runs": N, "spreadCm": 항목별 반복 편차}
+    }
+    """
+    runs_values = []
+    for lm in landmark_runs:
+        m, _ = landmarks_to_measurements(lm, scale, mode, reference)
+        runs_values.append({k: m[k] for k in PLAUSIBLE_RANGES_CM})
+
+    median, raw_spread = aggregate_runs(runs_values)
+
+    # 신뢰도용 편차는 "보고되는 값(중앙값)"의 안정성이어야 한다.
+    # N≥5이면 연속 3개 묶음의 중앙값들 산포(중앙값 추정치의 반복 편차)를 쓰고,
+    # 표본이 적으면 원시 산포를 그대로 쓴다 (보수적).
+    if len(runs_values) >= 5:
+        groups = [runs_values[i:i + 3] for i in range(len(runs_values) - 2)]
+        group_medians = [aggregate_runs(g)[0] for g in groups]
+        spread = {
+            k: float(max(gm[k] for gm in group_medians) - min(gm[k] for gm in group_medians))
+            for k in PLAUSIBLE_RANGES_CM
+        }
+    else:
+        spread = raw_spread
+
+    trace = scale["trace"]
+    tilt_ratio = trace["mmPerPxWidth"] / trace["mmPerPxHeight"]
+    marker_width_px = trace["widthPx"]
+
+    warnings: list[str] = []
+    confidence: dict[str, str] = {}
+    for key, value in median.items():
+        lo, hi = PLAUSIBLE_RANGES_CM[key]
+        in_range = lo <= value <= hi
+        if not in_range:
+            warnings.append(f"{key}={value:.1f}cm 이(가) 상식 범위({lo}~{hi}cm)를 벗어남")
+        confidence[key] = _confidence_level(
+            key, spread[key], marker_width_px, tilt_ratio, in_range
+        )
+    warnings.extend(check_anatomy(median))
+
+    measurements = {
+        **{k: round(v, 1) for k, v in median.items()},
+        "confidence": confidence,
+        "mode": mode,
+        "reference": reference,
+    }
+    return {
+        "measurements": measurements,
+        "warnings": warnings,
+        "stats": {"runs": len(runs_values), "spreadCm": {k: round(v, 2) for k, v in spread.items()}},
+    }
+
+
 def points_px_to_plane_mm(scale: dict, points_px: list | np.ndarray) -> np.ndarray:
     """이미지 px 좌표들을 기준물 평면 mm 좌표로 변환한다 (원근 제거).
 
