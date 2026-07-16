@@ -47,6 +47,7 @@
 | `server/tests/fixtures/person01_truth.json` (실측값, 옷 입은 상태) | △ 숫자만 다시 입력하면 됨 (재실측 불필요, 값은 본인이 앎) |
 | `server/tests/fixtures/person01_aruco.landmarks.json` (좌표 캐시) | ✅ API 1회 호출로 재생성 (`--fresh`) |
 | `server/tests/fixtures/debug_*.jpg` (확인용 이미지) | ✅ 전부 재생성 가능 |
+| `server/tests/fixtures/calibration_set.json` (다인 검증 manifest) | ✅ 형식은 fixtures/README.md — 몇 줄 재작성 |
 | `server/.env` (ANTHROPIC_API_KEY) | ✅ 키 1줄 재입력 (유출 의심 시 콘솔에서 재발급) |
 | `server/venv` | ✅ `python -m venv venv` + `pip install -r requirements.txt` |
 | `node_modules` | ✅ `npm install` |
@@ -205,7 +206,17 @@
 반복 편차 Gate: v1 7/8, v2 4/8, v3 5/8 (미달 항목은 허리=옵션 A 예정,
 v2 엉덩이·다리안쪽·상체=몸이 프레임에 작은 사진 조건).
 
-**관련 커밋**: (이 커밋)
+**관련 커밋**: `dbf84d4`
+
+**다인(多人) 검증 상시 구조 (2026-07-16 추가 — 사용자 요청)**
+- 추가 검증 시점이 미정이므로, 표본만 확보되면 **Phase 진행과 무관하게 언제든**
+  돌릴 수 있는 구조를 선행 구축: `scripts/calibrate_multi.py` +
+  `fixtures/calibration_set.json`(manifest, 로컬 전용) + fixtures/README.md에
+  대상 추가 절차(v2 촬영 조건 필수, --collect 13 = API 13회/대상)
+- 기능: 대상별 계수 역산 / 사람 간 산포(일반화 판정) / N≥2 시 Leave-One-Out
+  ±3cm/±5cm 검증 자동 / r 판정 ok 아닌 대상 경고(계수 오염 방지)
+- 구조 검증: N=1(person01 v2)로 실행 → 2-7b 계수를 차이 0.0000으로 재현 확인
+- 계수 상수 갱신은 자동 아님 — 사용자 결정 후 수동 + pytest·verify_27b 재검증
 
 **fixture 2종 체계 (2026-07-15 정리, 로컬 전용)**
 - `person01_aruco.jpg` = 3000×4000 원본 → **폭 1080px 리사이즈 + JPEG 85%**

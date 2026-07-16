@@ -743,6 +743,12 @@ git add . && git commit -m "Phase N-Step M 완료: <요약>"
 - **실질 정확도 검증은 Phase 4가 담당**: 본인이 핏을 아는 옷과의 대조
   (Phase 4 수동 검증)가 "편향 일정성" 가정의 실질 검증이다.
 - **향후 과제**: 표본(3명+)이 확보되면 절대 정확도(±3cm/±5cm) 검증을 수행한다.
+  **구조는 상시 준비됨 (2-7b 후속)**: `fixtures/calibration_set.json`에 대상 등록 후
+  `scripts/calibrate_multi.py` 실행 — 대상별 계수 역산·사람 간 산포·Leave-One-Out
+  교차 검증(N≥2 자동)을 출력한다. Phase 진행과 무관하게 언제든 실행 가능.
+  대상 추가 절차는 `fixtures/README.md` 참조 (v2 촬영 조건 필수 — 엣지 케이스
+  사진 등록 금지). 계수 상수 갱신은 자동이 아니라 사용자 결정 후 수동 +
+  pytest·verify_27b 재검증.
 
 ### 13-3. Phase Gate 진행 규칙 (규칙 3 요약)
 
