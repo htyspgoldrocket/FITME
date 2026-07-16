@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routes.analyze import router as analyze_router
+from routes.check_photo import router as check_photo_router
 
 app = FastAPI(title="FITME API", version="0.2.0")
 
@@ -24,6 +25,7 @@ app.add_middleware(
 )
 
 app.include_router(analyze_router)
+app.include_router(check_photo_router)
 
 
 @app.get("/health")

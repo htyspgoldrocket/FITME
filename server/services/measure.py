@@ -246,6 +246,47 @@ def check_anatomy(values: dict) -> list[str]:
     return warnings
 
 
+# ----- 좌우 대칭성 검사 (촬영 가이드 층위 4, 2-7c — 해부학 검증의 확장) -----
+# 정면 촬영이면 좌우 랜드마크 쌍이 몸 중심선에서 비슷한 거리에 있어야 한다.
+# 비대칭 = 몸이 돌아섰거나 광각 가장자리 왜곡 → 좌우 폭 기반 항목을 불신.
+# ⚠️ 허용치 근거: 추정 — 자연스러운 자세 편차를 감안한 넉넉한 값.
+# 몸통 4쌍만 검사한다. 발뒤꿈치 쌍은 제외 — 정면으로 서 있어도 발 벌림·체중
+# 이동으로 자연스럽게 비대칭이며(실측 36%), 몸통 회전 지표가 아니고 좌우 폭
+# 측정에도 쓰이지 않는다 (2-7c 검증에서 실증).
+SYMMETRY_PAIRS = [
+    ("left_shoulder", "right_shoulder"),
+    ("chest_left", "chest_right"),
+    ("waist_left", "waist_right"),
+    ("hip_left", "hip_right"),
+]
+SYMMETRY_TOLERANCE = 0.25  # |좌거리-우거리| / max(...) 가 25% 초과면 경고 — 추정
+# 비대칭 시 신뢰도를 강등할 "좌우 폭 기반" 항목
+_SYMMETRY_AFFECTED_KEYS = ("shoulder_width",) + _CIRCUMFERENCE_KEYS
+
+
+def check_symmetry(landmarks: dict) -> list[str]:
+    """좌우 대칭성 검사 — 비대칭 쌍을 경고 문자열로 반환."""
+    # 몸 중심선 x: 어깨 쌍과 엉덩이 쌍의 평균 (기울어진 카메라에도 안정적)
+    mid_x = (
+        landmarks["left_shoulder"][0] + landmarks["right_shoulder"][0]
+        + landmarks["hip_left"][0] + landmarks["hip_right"][0]
+    ) / 4.0
+    warnings = []
+    for left_key, right_key in SYMMETRY_PAIRS:
+        d_left = mid_x - landmarks[left_key][0]
+        d_right = landmarks[right_key][0] - mid_x
+        if d_left <= 0 or d_right <= 0:
+            warnings.append(f"좌우 교차 이상: {left_key}/{right_key}가 중심선 기준 뒤바뀜")
+            continue
+        asym = abs(d_left - d_right) / max(d_left, d_right)
+        if asym > SYMMETRY_TOLERANCE:
+            warnings.append(
+                f"좌우 비대칭: {left_key}/{right_key} 편차 {asym:.0%} "
+                f"(허용 {SYMMETRY_TOLERANCE:.0%} — 몸이 돌아섰거나 화면 가장자리 왜곡 의심)"
+            )
+    return warnings
+
+
 def aggregate_runs(runs_values: list[dict]) -> tuple[dict, dict]:
     """반복 측정값 목록 → (항목별 중앙값, 항목별 편차 max-min)."""
     if not runs_values:
@@ -329,6 +370,21 @@ def measure_with_statistics(
             key, spread[key], marker_width_px, tilt_ratio, in_range
         )
     warnings.extend(check_anatomy(median))
+
+    # 좌우 대칭성 검사 (층위 4) — 중앙값 랜드마크로 1회 판정.
+    # 비대칭이면 좌우 폭 기반 항목(어깨·둘레)의 신뢰도를 한 단계 강등.
+    median_landmarks = {
+        k: [
+            float(np.median([lm[k][0] for lm in landmark_runs])),
+            float(np.median([lm[k][1] for lm in landmark_runs])),
+        ]
+        for k in landmark_runs[0]
+    }
+    symmetry_warnings = check_symmetry(median_landmarks)
+    if symmetry_warnings:
+        warnings.extend(symmetry_warnings)
+        for key in _SYMMETRY_AFFECTED_KEYS:
+            confidence[key] = _LEVEL_DOWN[confidence[key]]
 
     measurements = {
         **{k: round(v, 1) for k, v in median.items()},

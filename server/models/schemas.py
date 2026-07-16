@@ -82,7 +82,23 @@ class FitResult(BaseModel):
     imageUrl: Optional[str] = None  # Phase 5 합성 이미지
 
 
+# ===== 촬영 품질 판정 (촬영 가이드 층위 3 — 2-7c 산출물) =====
+class PhotoCheckResult(BaseModel):
+    ready: bool                # 모든 조건 충족 → 자동 촬영 가능
+    reference: ReferenceInfo   # 검출 결과 (미검출이면 detected:false)
+    markerSizeOk: bool         # 마커 크기 충분
+    markerCentered: bool       # 마커가 화면 중앙 영역에 위치
+    tiltOk: bool               # 가로세로 척도 비율이 정면 범위(≈1)
+    reasons: list[str]         # 불충족 사유 (한국어, 사용자 안내용)
+
+
 # ===== /analyze 요청 (Phase 2) =====
 class AnalyzeRequest(BaseModel):
+    image: CapturedImage
+    mode: MeasurementMode
+
+
+# ===== /check-photo 요청 (2-7c) =====
+class CheckPhotoRequest(BaseModel):
     image: CapturedImage
     mode: MeasurementMode

@@ -16,6 +16,22 @@ export interface ReferenceInfo {
   cornersPx?: [number, number][]; // 검출된 네 꼭짓점 픽셀 좌표
 }
 
+// ===== 촬영 품질 판정 (촬영 가이드 층위 3 — 2-7c 산출물) =====
+export interface PhotoCheckResult {
+  ready: boolean;           // 모든 조건 충족 → 자동 촬영 가능
+  reference: ReferenceInfo; // 검출 결과 (미검출이면 detected:false)
+  markerSizeOk: boolean;    // 마커 크기 충분 (원거리·저해상도 방지)
+  markerCentered: boolean;  // 마커가 화면 중앙 영역에 위치
+  tiltOk: boolean;          // 가로세로 척도 비율이 정면 범위(≈1)
+  reasons: string[];        // 불충족 사유 (한국어, 사용자 안내용)
+}
+
+// ===== 사용자 프로필 (정확도 보강 입력 — 2-6 결정, 구현은 2-7b) =====
+export interface UserProfile {
+  heightCm: number;   // 키(cm) — 스케일 캘리브레이션 기준값 (필수)
+  weightKg?: number;  // 몸무게(kg) — 둘레 깊이 계수(BMI) 보정용 (선택)
+}
+
 // ===== 캡처 이미지 (Phase 1 → 2, 1 → 5 공통 규격) =====
 export interface CapturedImage {
   base64: string;        // 이미지 데이터 (data: 프리픽스 제외)
