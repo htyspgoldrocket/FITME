@@ -12,6 +12,7 @@ Landmarks match server/tests/test_analyze.py (head-heel 1400px), so with
 profile heightCm=172 the pipeline returns height exactly 172.0.
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -37,6 +38,12 @@ FAKE_LANDMARKS = {
     "left_heel": [480.0, 1500.0],
     "right_heel": [520.0, 1500.0],
 }
+
+
+# FITME_E2E_ASYM=1: shift left shoulder inward -> >25% asymmetry on all pairs
+# (tests the layer-4 retake recommendation, 2-8f)
+if os.environ.get("FITME_E2E_ASYM") == "1":
+    FAKE_LANDMARKS["left_shoulder"] = [430.0, 300.0]
 
 
 def _fake_extract(image_base64, width, height, mime_type="image/jpeg"):

@@ -121,6 +121,27 @@ function MeasureResult({ image, mode, profile, onRetake, onRestart }: MeasureRes
   const m = response.measurements;
   const values = m as unknown as Record<string, number>;
 
+  // 층위 4 (2-8f) — 촬영 후 피드백: 측정은 됐지만 품질 신호가 나쁘면
+  // 구체 사유와 함께 재촬영을 권고한다 (경고 문구 접두어는 백엔드 계약:
+  // check_symmetry "좌우 …", check_scale_agreement level "suspect")
+  const lowCount = FIELD_LABELS.filter(([key]) => m.confidence[key] === 'low').length;
+  const retakeReasons: string[] = [];
+  if (response.warnings.some((w) => w.startsWith('좌우'))) {
+    retakeReasons.push(
+      '몸이 좌우 비대칭으로 찍혔어요 — 정면을 보고 몸을 화면 정중앙에 맞춰 주세요',
+    );
+  }
+  if (response.stats?.scale.agreementLevel === 'suspect') {
+    retakeReasons.push(
+      '키 입력값과 기준물 크기가 크게 어긋나요 — 키 입력값과 마커 100% 배율 출력을 확인해 주세요',
+    );
+  }
+  if (lowCount >= 3) {
+    retakeReasons.push(
+      `신뢰도가 낮은 항목이 ${lowCount}개예요 — 촬영 가이드(❓)를 지켜 다시 찍으면 좋아져요`,
+    );
+  }
+
   return (
     <div className="result">
       <header className="result__header">
@@ -131,6 +152,24 @@ function MeasureResult({ image, mode, profile, onRetake, onRestart }: MeasureRes
           {response.stats?.scale.source === 'height' ? ' · 키 기준 척도' : ''}
         </p>
       </header>
+
+      {retakeReasons.length > 0 && (
+        <div className="result__retake">
+          <strong>📸 재촬영을 권장해요</strong>
+          <ul>
+            {retakeReasons.map((r) => (
+              <li key={r}>{r}</li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            className="result__btn result__btn--primary"
+            onClick={onRetake}
+          >
+            다시 촬영하기
+          </button>
+        </div>
+      )}
 
       <table className="result__table">
         <tbody>
@@ -149,7 +188,7 @@ function MeasureResult({ image, mode, profile, onRetake, onRestart }: MeasureRes
       </table>
 
       {response.warnings.length > 0 && (
-        <details className="result__warnings">
+        <details className="result__warnings" open={retakeReasons.length > 0}>
           <summary>주의 사항 {response.warnings.length}건</summary>
           <ul>
             {response.warnings.map((w) => (

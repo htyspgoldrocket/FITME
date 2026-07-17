@@ -136,10 +136,32 @@ try {
   check('경고 섹션 표시 (합성 조건상 척도 경고 예상)',
     (await page.$('.result__warnings')) !== null);
 
-  // 다시 촬영 → 카메라 복귀 (결과 화면에서의 재촬영 경로)
+  // 층위 4 (2-8f) — 합성 조건은 척도 suspect → 재촬영 권고 배너 + 사유
+  const retakeText = await page.$eval('.result__retake', (el) => el.textContent);
+  check('재촬영 권고 배너 표시 (척도 suspect 사유)', retakeText.includes('기준물 크기'));
+  check('권고 시 주의 사항이 펼쳐진 상태',
+    await page.$eval('.result__warnings', (el) => el.hasAttribute('open')));
+
+  // 비대칭 백엔드로 교체 → 재촬영 주행 → 비대칭 사유 확인
+  backend.kill();
+  check('백엔드 종료 대기', await waitBackend(false));
+  backend = spawn(
+    PYTHON,
+    ['-m', 'uvicorn', 'tests.e2e_fake_backend:app', '--port', '8000'],
+    { cwd: ROOT, stdio: 'ignore', env: { ...process.env, FITME_E2E_ASYM: '1' } },
+  );
+  check('비대칭 백엔드 기동', await waitBackend(true));
+
+  // 다시 촬영 → 카메라 → (층위 3 자동 촬영: 이번엔 판정 서버가 살아 있음) → 미리보기
   await page.click('.result__actions .result__btn:not(.result__btn--primary)');
   await page.waitForSelector('.camera', { timeout: 10000 });
   check('결과 화면 → 다시 촬영 → 카메라 복귀', true);
+  await page.waitForSelector('.preview', { timeout: 30000 });
+  check('재촬영: 자동 촬영으로 미리보기 도달', true);
+  await page.click('.preview__btn--primary');
+  await page.waitForSelector('.result__retake', { timeout: 30000 });
+  const asymText = await page.$eval('.result__retake', (el) => el.textContent);
+  check('비대칭 랜드마크 → 재촬영 권고에 비대칭 사유 표시', asymText.includes('비대칭'));
 } catch (e) {
   console.error('FAIL  예외 발생:', e.message);
   failures += 1;

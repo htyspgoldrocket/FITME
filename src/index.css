@@ -694,6 +694,29 @@ body {
   color: #f87171;
 }
 
+/* 층위 4 — 재촬영 권고 (2-8f) */
+.result__retake {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(234, 179, 8, 0.6);
+  border-radius: 12px;
+  background: rgba(234, 179, 8, 0.08);
+  font-size: 0.9rem;
+}
+
+.result__retake strong {
+  color: #facc15;
+}
+
+.result__retake ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #e5e7eb;
+  line-height: 1.6;
+}
+
 .result__warnings {
   background: #1f2937;
   border-radius: 12px;
