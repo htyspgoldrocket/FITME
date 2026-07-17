@@ -20,6 +20,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "server"))
 
 import routes.analyze as analyze_route  # noqa: E402
+import routes.clothing as clothing_route  # noqa: E402
+from services import clothing_store  # noqa: E402
 
 FAKE_LANDMARKS = {
     "head_top": [500.0, 100.0],
@@ -51,5 +53,47 @@ def _fake_extract(image_base64, width, height, mime_type="image/jpeg"):
 
 
 analyze_route.extract_body_landmarks = _fake_extract
+
+
+# --- clothing (3-4b): replace only the Musinsa scrape -- normalization (3-3),
+# route logic and the SQLite cache (3-4a) all run for real, offline.
+# Cache DB goes to a per-process temp file so the real DB is never touched
+# and every E2E run starts cold.
+FAKE_RAW_CLOTHING = {
+    "source": "musinsa",
+    "url": "https://www.musinsa.com/products/1234567",
+    "brand": "E2E BRAND",
+    "productName": "E2E test jacket",
+    "categoryPath": ["아우터", "기타 점퍼/재킷"],
+    "typeName": "점퍼",
+    "sizes": [
+        {"label": "S", "measurements": {
+            "총장": 65.0, "어깨너비": 45.0, "가슴단면": 52.5, "소매길이": 63.0}},
+        {"label": "M", "measurements": {
+            "총장": 67.0, "어깨너비": 47.0, "가슴단면": 55.5, "소매길이": 64.5}},
+    ],
+}
+
+
+def _fake_scrape(url, timeout_ms=15000):
+    # Faithful to the real scrape_musinsa contract: non-Musinsa URLs raise
+    # "unsupported" before any network access (same check, same error code).
+    from services.clothing_scrape import ClothingScrapeError, parse_musinsa_url
+
+    if parse_musinsa_url(url) is None:
+        raise ClothingScrapeError(
+            "unsupported",
+            "무신사 상품 주소(musinsa.com/products/…)만 지원해요 — 다른 쇼핑몰은 순차 확대 예정",
+        )
+    return FAKE_RAW_CLOTHING
+
+
+clothing_route.scrape_musinsa = _fake_scrape
+
+import tempfile  # noqa: E402
+
+_db_fd, _db_path = tempfile.mkstemp(suffix=".sqlite")
+os.close(_db_fd)  # sqlite opens by path; a 0-byte existing file is a valid new DB
+clothing_store.DB_PATH = Path(_db_path)
 
 from main import app  # noqa: E402, F401

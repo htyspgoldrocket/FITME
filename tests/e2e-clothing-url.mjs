@@ -134,9 +134,9 @@ try {
   );
   check('정상 URL 시 다음 버튼 활성', validEnabled);
   await page.click('.clothing .profile__btn--primary');
-  await page.waitForSelector('.clothing-spec', { timeout: 5000 });
-  const specText = await page.$eval('.clothing-spec', (el) => el.textContent);
-  check('의류 정보(stub) 화면에 입력 주소 표시', specText.includes(MUSINSA_URL));
+  // 3-4b부터 stub이 아닌 실제 스펙 화면 — 가짜 백엔드의 사이즈 표가 뜬다
+  await page.waitForSelector('.clothing-spec .spec__table', { timeout: 15000 });
+  check('의류 정보 화면 진입 (사이즈 표 표시)', true);
 
   // 주소 다시 입력 → 이전 입력값 유지 (App 보관)
   await page.click('.clothing-spec .result__actions .result__btn');

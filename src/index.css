@@ -782,3 +782,25 @@ body {
   font-size: 1rem;
   cursor: pointer;
 }
+
+/* ===== 의류 정보 화면 (3-4b) ===== */
+
+/* 사이즈 표는 부위 컬럼이 많아 화면보다 넓어질 수 있음 — 표만 가로 스크롤 */
+.spec__scroll {
+  overflow-x: auto;
+  border-radius: 12px;
+}
+
+.spec__table th,
+.spec__table td {
+  white-space: nowrap;
+}
+
+.spec__table thead th {
+  font-size: 0.82rem;
+  color: #9ca3af;
+}
+
+.spec__needs-input {
+  color: #fbbf24;
+}

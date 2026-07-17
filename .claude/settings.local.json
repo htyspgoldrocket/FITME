@@ -70,7 +70,11 @@
       "PowerShell(cd C:\\\\claude_code\\\\FITME\\\\server; .\\\\venv\\\\Scripts\\\\python.exe -m pytest tests/ -q 2>$null | Select-Object -Last 3; cd C:\\\\claude_code\\\\FITME; npx tsc --noEmit; Write-Output \"tsc exit: $LASTEXITCODE\")",
       "PowerShell(cd C:\\\\claude_code\\\\FITME\\\\server; $env:PYTHONIOENCODING='utf-8'; .\\\\venv\\\\Scripts\\\\python.exe -m services.clothing_normalize https://www.musinsa.com/products/6516683; Write-Output '==='; .\\\\venv\\\\Scripts\\\\python.exe -m services.clothing_normalize https://www.musinsa.com/products/6719352)",
       "Bash(git add *)",
-      "Bash(git commit -m 'Phase 3-Step 4a 완료: POST /clothing 백엔드 + SQLite 캐시 + ClothingResponse 계약 *)"
+      "Bash(git commit -m 'Phase 3-Step 4a 완료: POST /clothing 백엔드 + SQLite 캐시 + ClothingResponse 계약 *)",
+      "PowerShell(cd C:\\\\claude_code\\\\FITME; node tests/e2e-autoshoot.mjs; \"=== exit $LASTEXITCODE ===\")",
+      "PowerShell(cd C:\\\\claude_code\\\\FITME\\\\server; Start-Process -FilePath \".\\\\venv\\\\Scripts\\\\uvicorn.exe\" -ArgumentList \"main:app --port 8000\" -WindowStyle Hidden; Start-Sleep -Seconds 4; \\(Invoke-RestMethod http://127.0.0.1:8000/health\\).status)",
+      "PowerShell(cd C:\\\\claude_code\\\\FITME\\\\server; .\\\\venv\\\\Scripts\\\\python.exe -m pytest tests/ -q --timeout=120 2>$null; \"exit=$LASTEXITCODE\")",
+      "Bash(git commit -m 'Phase 3-Step 4b 완료: fetchClothingSpec 실연동 + 의류 스펙 화면 — Step 3-4 전체 완료 *)"
     ]
   }
 }

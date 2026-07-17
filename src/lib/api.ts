@@ -1,16 +1,17 @@
 // ============================================================
 // 백엔드 API 호출 레이어
-// Phase 1에서는 전부 stub(더미 반환)이다. — CLAUDE.md 규칙 4 (Stub-First)
+// Phase 1에서는 전부 stub(더미 반환)으로 시작했다. — CLAUDE.md 규칙 4 (Stub-First)
 // 각 Phase에서 실제 백엔드 호출로 교체한다:
-//   analyzeBody       → Phase 2-8
-//   fetchClothingSpec → Phase 3-4
-//   calculateFit      → Phase 4-4
+//   analyzeBody       → Phase 2-8 ✅ 교체 완료
+//   fetchClothingSpec → Phase 3-4 ✅ 교체 완료
+//   calculateFit      → Phase 4-4 (아직 stub)
 // ============================================================
 
 import type {
   AnalyzeResponse,
   BodyMeasurements,
   CapturedImage,
+  ClothingResponse,
   ClothingSpec,
   FitResult,
   MeasurementMode,
@@ -83,22 +84,33 @@ export async function analyzeBody(
 }
 
 /**
- * [STUB] 의류 스펙 추출 — Phase 3에서 백엔드 `/clothing` 호출로 교체.
+ * 의류 스펙 추출 (3-4b — stub에서 실제 연동으로 교체 완료).
+ * POST /clothing: 서버 SQLite 캐시 → (미스 시) 무신사 스크래핑(3-2) + 정규화(3-3).
+ * 첫 조회는 Playwright 브라우저 기동 포함 십수 초가 걸릴 수 있다 (캐시 적중은 즉시).
+ *
+ * 지원 외 쇼핑몰·없는 상품 등은 예외가 아니라 ok=false + error(한국어)로
+ * 돌아온다 (AnalyzeResponse와 같은 방식). 예외는 네트워크/서버 오류일 때만.
  */
-// TODO(Phase 3-4): 백엔드 스크래핑 + 사이즈 정규화 실제 연동으로 교체
-export async function fetchClothingSpec(url: string): Promise<ClothingSpec> {
-  return {
-    brand: 'STUB_BRAND',
-    url,
-    category: 'top',
-    fabric: 'cotton',
-    stretch: 'low',
-    sizes: [
-      { label: 'S', chest_cm: 92, waist_cm: 78, hip_cm: 92 },
-      { label: 'M', chest_cm: 97, waist_cm: 83, hip_cm: 97 },
-      { label: 'L', chest_cm: 102, waist_cm: 88, hip_cm: 102 },
-    ],
-  };
+export async function fetchClothingSpec(
+  url: string,
+  timeoutMs = 60_000,
+): Promise<ClothingResponse> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/clothing`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`clothing 실패: HTTP ${res.status}`);
+    }
+    return (await res.json()) as ClothingResponse;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**

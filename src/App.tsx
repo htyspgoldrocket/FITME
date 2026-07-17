@@ -5,11 +5,13 @@ import CameraView, { TIMER_OPTIONS, type TimerSeconds } from './components/Camer
 import PhotoPreview from './components/PhotoPreview';
 import MeasureResult from './components/MeasureResult';
 import ClothingUrlInput from './components/ClothingUrlInput';
+import ClothingSpecView from './components/ClothingSpecView';
 import { captureFramesFromVideo } from './lib/image';
 import type { CameraFacing } from './lib/camera';
 import type {
   AnalyzeResponse,
   CapturedImage,
+  ClothingResponse,
   MeasurementMode,
   UserProfile,
 } from './types';
@@ -36,6 +38,9 @@ function App() {
   const [analysis, setAnalysis] = useState<AnalyzeResponse | null>(null);
   // 의류 상품 페이지 URL (3-1) — 재입력 진입 시 유지되도록 App이 보관
   const [clothingUrl, setClothingUrl] = useState<string | null>(null);
+  // 같은 URL의 의류 조회 결과 캐시 (3-4b) — 뒤로가기 재진입 시 재요청 없음.
+  // URL이 바뀌면 무효화한다 (분석 캐시와 동일 패턴)
+  const [clothing, setClothing] = useState<ClothingResponse | null>(null);
   // 키(필수)·몸무게(선택) — 척도 캘리브레이션·BMI 보정 입력(2-7b).
   // 재촬영·뒤로가기 후에도 유지되도록 App이 보관 (Phase 1 배운 것 3번)
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -146,6 +151,9 @@ function App() {
       <ClothingUrlInput
         initial={clothingUrl}
         onSubmit={(url) => {
+          if (url !== clothingUrl) {
+            setClothing(null); // 새 URL → 이전 조회 캐시 무효화
+          }
           setClothingUrl(url);
           setScreen('clothing-spec');
         }}
@@ -154,33 +162,17 @@ function App() {
     );
   }
 
-  // 의류 정보 화면 — [Phase 3 stub] 3-2(무신사 스크래핑)~3-4(실연동)에서 채워진다.
-  // TODO(Phase 3-4): fetchClothingSpec 호출 + ClothingSpec 표시로 교체
+  // 의류 정보 (3-4b) — /clothing 호출·로딩·실패 처리는 ClothingSpecView가 담당
   if (screen === 'clothing-spec' && clothingUrl !== null) {
     return (
-      <div className="result result--center clothing-spec">
-        <h2>의류 정보 확인</h2>
-        <p className="result__note">
-          [준비 중] 사이즈 추출은 다음 단계(3-2 무신사 스크래핑)에서 연결됩니다.
-        </p>
-        <p className="result__note">입력한 주소: {clothingUrl}</p>
-        <div className="result__actions">
-          <button
-            type="button"
-            className="result__btn"
-            onClick={() => setScreen('clothing-url')}
-          >
-            주소 다시 입력
-          </button>
-          <button
-            type="button"
-            className="result__btn"
-            onClick={() => setScreen('mode-select')}
-          >
-            처음으로
-          </button>
-        </div>
-      </div>
+      <ClothingSpecView
+        url={clothingUrl}
+        cached={clothing}
+        // ok=false는 캐시하지 않음 — 같은 URL 재진입 시 재조회로 복구 기회를 준다
+        onLoaded={(r) => setClothing(r.ok ? r : null)}
+        onEditUrl={() => setScreen('clothing-url')}
+        onRestart={() => setScreen('mode-select')}
+      />
     );
   }
 

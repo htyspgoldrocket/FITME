@@ -141,10 +141,27 @@
     (오프라인 — 성공+캐시 적중·실패 미캐시·unsupported·TTL 만료) 전체 89/89
     + tsc, 라이브 3종(실상품 5사이즈 12.3초→캐시 0초 / 타 쇼핑몰 unsupported /
     없는 상품 not-found)
-- **다음 시작 지점: 3-4b — 프론트** (`fetchClothingSpec` stub→실제
-  POST /clothing 호출(ClothingResponse) + clothing-spec 화면을 stub에서
-  실제 스펙 표시(로딩/오류/재시도, 사이즈 테이블, needsUserInput·warnings
-  표시)로 교체 + E2E → 완료 시 Step 3-4 전체 완료)
+  - **3-4b ✅ 완료 (2026-07-17) → Step 3-4 전체 완료**: 프론트 —
+    `fetchClothingSpec` stub→실제 POST /clothing(ClothingResponse, 타임아웃
+    60초 — 첫 조회는 Playwright 기동 십수 초) + `ClothingSpecView.tsx` 신규
+    (로딩/네트워크 오류·재시도/ok:false 한국어 안내/사이즈 표 — 값 있는 부위
+    컬럼만 동적 표시, ≈=호칭 근사, needsUserInput·warnings 표시. 핏 진행
+    버튼은 4-4 몫이라 미구현 — 규칙 4) + 조회 캐시 App 승격(URL 변경 시
+    무효화, **ok=false는 캐시 안 함** — 재진입 재조회로 복구 기회).
+    Phase 1 stub 3종 중 calculateFit만 남음(4-4).
+    검증: tsc+build, E2E 신규 13/13(`tests/e2e-clothing-spec.mjs` — 표 표시·
+    단면×2 환산·컬럼 동적·App 캐시·URL 변경 재조회·unsupported 안내),
+    회귀 11/11(clothing-url — stub 검증을 실화면으로 갱신)·17/17·14/14·
+    7/7(실백엔드) + pytest 89/89
+- **다음 시작 지점: Phase 3 Gate 검증** — 자동(pytest로 커버) 재확인 +
+  **수동 검증(사용자 요청 필요)**: 실제 무신사 URL 3개(가능하면 상의·하의 등
+  다른 종류)로 실기기에서 사이즈 추출 → 쇼핑몰 사이즈표와 대조 + 통합
+  (촬영→측정→의류 URL→스펙 표시 전체 흐름 실기기 확인) → qa Gate 리포트 →
+  사용자 승인 → Phase 4.
+  ⚠️ 타 쇼핑몰 3개 대조는 현재 무신사만 지원이라 "서로 다른 쇼핑몰" 항목은
+  무신사 상품 3종으로 대체할지 사용자 협의 필요
+  ⚠️ Phase 4 수동 검증(아는 옷 대조) 전에 Phase 2 수동 검증(반복 일관성)
+  완료 필요 (보류 중 — 위 절차 기록 참조)
   ⚠️ Phase 4 수동 검증(아는 옷 대조)은 Phase 2 편향 일정성 가정의 실질
   검증이므로, 늦어도 그 전에 Phase 2 수동 검증(반복 일관성)을 완료할 것
 
@@ -166,7 +183,15 @@
    일반 브라우저 UA 필수.
 4. **Playwright sync API는 FastAPI async 라우트에서 직접 못 씀** — 3-4에서
    `/clothing` 라우트는 `def`(threadpool) 엔드포인트로 만들거나 async API로
-   전환할 것.
+   전환할 것. (→ 3-4a에서 `def`로 구현 완료)
+5. **가짜 구현(E2E fake)은 실계약의 에러 경로까지 따라야 한다** — 3-4b에서
+   fake scrape가 URL 무관 성공을 반환해, 지원 외 쇼핑몰 시나리오가 오류
+   화면 대신 성공 화면을 띄워 E2E 실패. 실코드의 판정 함수(parse_musinsa_url)를
+   fake가 재사용하도록 수정해 해결. 새 fake를 만들 때는 "성공 응답"만이 아니라
+   "어떤 입력에서 어떤 실패를 내는가"까지 실코드와 맞출 것.
+6. **e2e-autoshoot.mjs는 실백엔드(8000) 사전 기동 전제** — 다른 E2E처럼
+   가짜 백엔드를 스스로 띄우지 않음. 서버 없이 돌리면 배너 셀렉터 타임아웃
+   2건으로 실패 (3-4b 회귀 중 실제 겪음 — 코드 문제 아님).
 - (이하 절차 기록은 추후 수동 검증 재개용으로 보존)
   - **수동 검증 세션 중간 기록 (2026-07-17)**: ① 자이로 2축 실폰 작동 확인
     (데스크톱 불가 항목). ±7° 맞추기 어렵다는 의견 있었으나 **사용자 결정으로
