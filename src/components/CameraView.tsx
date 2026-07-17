@@ -9,11 +9,19 @@ import {
   type CameraFacing,
   type TiltState,
 } from '../lib/camera';
-import type { MeasurementMode } from '../types';
+import { checkPhoto } from '../lib/api';
+import { captureFromVideo } from '../lib/image';
+import type { MeasurementMode, PhotoCheckResult } from '../types';
 
 /** 셔터 타이머(초). 0 = 즉시 촬영 */
 export type TimerSeconds = 0 | 3 | 5 | 10;
 export const TIMER_OPTIONS: TimerSeconds[] = [0, 3, 5, 10];
+
+// ===== 층위 3 — 실시간 검증 + 자동 촬영 (2-8d, 서버 폴링 방식 확정) =====
+const POLL_INTERVAL_MS = 1200; // 응답 수신 후 다음 폴링까지 간격 (직렬 — 요청 중첩 없음)
+const AUTO_COUNTDOWN_SEC = 3; // 조건 충족 시 자동 촬영 카운트다운
+const READY_STREAK_TO_SHOOT = 2; // 연속 ready 판정 수 — 일시적 통과(깜빡임) 오발사 방지
+const CANCEL_COOLDOWN_MS = 8000; // 사용자가 자동 카운트다운을 취소하면 잠시 재발동 억제
 
 interface CameraViewProps {
   mode: MeasurementMode;
@@ -29,6 +37,9 @@ interface CameraViewProps {
   /** 층위 1 정적 안내(2-8c) — 세션 첫 진입에만 자동 표시되도록 App이 보관 */
   showGuide: boolean;
   onDismissGuide: () => void;
+  /** 층위 3 자동 촬영(2-8d) — 재촬영 후에도 유지되도록 App이 보관 */
+  autoShoot: boolean;
+  onToggleAutoShoot: () => void;
 }
 
 /** 층위 1 — 촬영 전 정적 안내 항목 (CLAUDE.md 전략 1 4층위 명세) */
@@ -51,11 +62,22 @@ function CameraView({
   onShutter,
   showGuide,
   onDismissGuide,
+  autoShoot,
+  onToggleAutoShoot,
 }: CameraViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
   // 층위 1 안내: 세션 첫 진입엔 자동으로 열리고, 이후엔 ❓ 버튼으로 재열람
   const [guideOpen, setGuideOpen] = useState(showGuide);
+  // 층위 3: 최신 판정 결과 (null = 아직 없음/서버 오류)
+  const [check, setCheck] = useState<PhotoCheckResult | null>(null);
+  const [serverDown, setServerDown] = useState(false);
+  // 연속 ready 횟수 — READY_STREAK_TO_SHOOT 이상이면 자동 카운트다운 발동
+  const readyStreak = useRef(0);
+  // 진행 중인 카운트다운의 출처 — 조건 깨짐 취소는 auto에만 적용 (수동 타이머 보호)
+  const countdownSource = useRef<'auto' | 'manual' | null>(null);
+  // 사용자가 자동 카운트다운을 취소한 직후의 재발동 억제 시각
+  const cooldownUntil = useRef(0);
   const [tilt, setTilt] = useState<TiltState | null>(null);
   const [needsGyroTap, setNeedsGyroTap] = useState(false);
   // 스트림 준비 전(초기 로딩·전환 중) 셔터를 막아 빈 프레임 캡처를 방지
@@ -69,6 +91,7 @@ function CameraView({
     let cancelled = false;
     setReady(false);
     setCountdown(null); // 카메라 전환 시 진행 중이던 카운트다운 취소
+    countdownSource.current = null;
     (async () => {
       try {
         stream = await startCamera(facing);
@@ -110,6 +133,7 @@ function CameraView({
     if (countdown === null) return;
     if (countdown <= 0) {
       setCountdown(null);
+      countdownSource.current = null;
       if (videoRef.current) onShutter(videoRef.current);
       return;
     }
@@ -117,15 +141,74 @@ function CameraView({
     return () => window.clearTimeout(id);
   }, [countdown, onShutter]);
 
+  // 층위 3 — /check-photo 서버 폴링 (직렬: 응답 후 POLL_INTERVAL_MS 뒤 다음 요청).
+  // 조건 연속 충족 → 자동 카운트다운, 카운트다운 중 조건 깨지면 취소.
+  // 서버 미응답이어도 수동 촬영 경로는 그대로 살아 있다.
+  useEffect(() => {
+    if (!autoShoot || !ready || guideOpen) return;
+    let stopped = false;
+    let timer: number | undefined;
+    readyStreak.current = 0;
+
+    const tick = async () => {
+      const video = videoRef.current;
+      if (video && !stopped) {
+        try {
+          const result = await checkPhoto(captureFromVideo(video), mode);
+          if (stopped) return;
+          setServerDown(false);
+          setCheck(result);
+          if (result.ready) {
+            readyStreak.current += 1;
+            if (
+              readyStreak.current >= READY_STREAK_TO_SHOOT &&
+              Date.now() >= cooldownUntil.current
+            ) {
+              setCountdown((c) => {
+                if (c !== null) return c; // 이미 진행 중(수동 포함)이면 유지
+                countdownSource.current = 'auto';
+                return AUTO_COUNTDOWN_SEC;
+              });
+            }
+          } else {
+            readyStreak.current = 0;
+            if (countdownSource.current === 'auto') {
+              countdownSource.current = null;
+              setCountdown(null); // 조건 깨짐 — 자동 카운트다운만 취소
+            }
+          }
+        } catch {
+          if (stopped) return;
+          setServerDown(true);
+          setCheck(null);
+          readyStreak.current = 0;
+        }
+      }
+      if (!stopped) timer = window.setTimeout(tick, POLL_INTERVAL_MS);
+    };
+    tick();
+    return () => {
+      stopped = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [autoShoot, ready, guideOpen, mode]);
+
   const handleShutterClick = () => {
     if (countdown !== null) {
-      setCountdown(null); // 카운트다운 중 재탭 = 취소
+      // 카운트다운 중 재탭 = 취소. 자동 발동이었다면 잠시 재발동을 억제한다.
+      if (countdownSource.current === 'auto') {
+        cooldownUntil.current = Date.now() + CANCEL_COOLDOWN_MS;
+        readyStreak.current = 0;
+      }
+      countdownSource.current = null;
+      setCountdown(null);
       return;
     }
     if (timerSec === 0) {
       if (videoRef.current) onShutter(videoRef.current);
       return;
     }
+    countdownSource.current = 'manual';
     setCountdown(timerSec);
   };
 
@@ -254,6 +337,41 @@ function CameraView({
       {countdown !== null && countdown > 0 && (
         <div className="camera__countdown" aria-live="assertive">
           {countdown}
+        </div>
+      )}
+
+      {/* 층위 3 — 자동 촬영 토글 + 실시간 판정 배너 */}
+      {!guideOpen && (
+        <div className="camera__status">
+          <button
+            type="button"
+            className={'camera__auto' + (autoShoot ? ' camera__auto--on' : '')}
+            onClick={onToggleAutoShoot}
+          >
+            자동 촬영 {autoShoot ? 'ON' : 'OFF'}
+          </button>
+          {autoShoot && (
+            <span
+              className={
+                'camera__banner ' +
+                (serverDown || check === null
+                  ? 'camera__banner--idle'
+                  : check.ready
+                    ? 'camera__banner--ok'
+                    : 'camera__banner--warn')
+              }
+            >
+              {serverDown
+                ? '판정 서버에 연결할 수 없어요 — 수동 촬영은 가능해요'
+                : check === null
+                  ? '촬영 조건 확인 중…'
+                  : check.ready
+                    ? countdown !== null
+                      ? '✓ 좋아요! 곧 촬영해요'
+                      : '✓ 좋아요! 이대로 계세요'
+                    : check.reasons[0]}
+            </span>
+          )}
         </div>
       )}
 

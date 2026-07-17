@@ -13,7 +13,39 @@ import type {
   ClothingSpec,
   FitResult,
   MeasurementMode,
+  PhotoCheckResult,
 } from '../types';
+
+/** 백엔드 베이스 경로 — dev는 Vite 프록시(/api → localhost:8000)가 중계 */
+export const API_BASE = '/api';
+
+/**
+ * 촬영 품질 판정 (층위 3, 2-8d) — POST /check-photo 실시간 폴링용.
+ * AI 호출이 없는 엔드포인트라 1초 간격 폴링에 사용 가능 (2-7c).
+ * @throws 서버 미응답·HTTP 오류·타임아웃 시 Error (호출부가 폴링을 계속할지 판단)
+ */
+export async function checkPhoto(
+  image: CapturedImage,
+  mode: MeasurementMode,
+  timeoutMs = 5000,
+): Promise<PhotoCheckResult> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/check-photo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image, mode }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`check-photo 실패: HTTP ${res.status}`);
+    }
+    return (await res.json()) as PhotoCheckResult;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /**
  * [STUB] 신체 치수 분석 — Phase 2에서 백엔드 `/analyze` 호출로 교체.

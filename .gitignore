@@ -26,6 +26,9 @@ Thumbs.db
 server/tests/fixtures/*
 !server/tests/fixtures/README.md
 
+# E2E 가짜 카메라 영상 — tests/gen_fake_camera.py로 생성 (바이너리라 커밋 제외)
+tests/fake-marker.y4m
+
 # 로그
 *.log
 npm-debug.log*

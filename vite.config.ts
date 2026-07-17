@@ -34,5 +34,16 @@ export default defineConfig({
     host: true, // 모바일 기기에서 같은 네트워크로 접속 가능하도록
     // 폰 수동 검증용 Cloudflare 빠른 터널 허용 (dev 서버 전용, 빌드에는 영향 없음)
     allowedHosts: ['.trycloudflare.com'],
+    // 백엔드 프록시 (2-8d) — 프론트는 항상 같은 오리진의 /api로 호출.
+    // 폰 검증 시 터널 1개(5173)로 백엔드(8000)까지 커버되고 CORS도 불필요.
+    proxy: {
+      '/api': {
+        // 127.0.0.1 고정 — localhost는 IPv6(::1)로 먼저 풀려 IPv4만 듣는
+        // uvicorn에 연결 실패할 수 있다 (Windows에서 실제 겪음, 2-8d)
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/api/, ''),
+      },
+    },
   },
 });
