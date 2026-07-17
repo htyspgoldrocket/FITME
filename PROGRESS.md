@@ -57,6 +57,12 @@
     몸무게 20~300)만 UI가 차단, 정밀 오타 검증은 r 판정(2-7b) 몫.
     검증: tsc+build 통과, E2E 스모크 9/9 (`tests/e2e-profile-flow.mjs` —
     puppeteer-core 정식 자산화, 13-4). analyzeBody에 profile 전달은 2-8e에서
+  - **2-8c ✅ 완료 (2026-07-17)**: 층위 1·2 — 촬영 전 정적 안내 오버레이
+    (5항목, 세션 첫 진입 자동 표시 + ❓ 재열람, guideSeen은 App 보관) +
+    정중앙 실루엣 SVG 가이드(기존 점선 프레임 교체) + 자이로 2축 분리 표시
+    (좌우 수평·앞뒤 기울기 — camera.ts 데이터 기존 그대로, 표시만 확장.
+    VERTICAL_TOLERANCE_DEG export 1줄만 변경). 검증: tsc+build, E2E 14/14
+    (안내 표시/닫힘/재진입 생략/재열람 포함), 스크린샷 육안 확인
   - 완료 후 Phase 2 Gate(조정된 기준) 검증 진행
   - **Gate 기준(조정, 2026-07-16)**: 일관성(반복 편차 2cm)은 길이 항목+어깨에
     적용, 둘레 3종은 알려진 한계 — CLAUDE.md 13-2

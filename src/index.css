@@ -232,14 +232,24 @@ body {
   pointer-events: none;
 }
 
-.camera__body-frame {
+/* 층위 2 — 정중앙 실루엣 가이드 (2-8c, 광각 가장자리 회피) */
+.camera__silhouette {
   position: absolute;
-  top: 6%;
-  bottom: 14%;
-  left: 18%;
-  right: 18%;
-  border: 2px dashed rgba(255, 255, 255, 0.55);
-  border-radius: 45% 45% 30% 30% / 12% 12% 8% 8%;
+  top: 5%;
+  bottom: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 83%;
+  width: auto;
+}
+
+.camera__silhouette circle,
+.camera__silhouette path {
+  fill: rgba(255, 255, 255, 0.06);
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  stroke-linejoin: round;
 }
 
 .camera__ref-guide {
@@ -283,11 +293,88 @@ body {
   color: rgba(255, 255, 255, 0.9);
 }
 
+/* 자이로 2축 표시 (2-8c — 좌우 수평 + 앞뒤 기울기) */
+.camera__tilt-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .camera__tilt {
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 0.78rem;
   white-space: nowrap;
+}
+
+.camera__help {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ===== 층위 1 — 촬영 전 정적 안내 오버레이 (2-8c) ===== */
+.camera-guide {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+  padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+  background: rgba(0, 0, 0, 0.82);
+}
+
+.camera-guide__title {
+  margin: 0;
+  font-size: 1.25rem;
+  text-align: center;
+  color: #f9fafb;
+}
+
+.camera-guide__list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: 420px;
+  align-self: center;
+}
+
+.camera-guide__list li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #e5e7eb;
+}
+
+.camera-guide__icon {
+  flex-shrink: 0;
+  font-size: 1.2rem;
+}
+
+.camera-guide__confirm {
+  align-self: center;
+  min-width: 200px;
+  padding: 14px 32px;
+  border-radius: 12px;
+  border: 1px solid #22c55e;
+  background: #15803d;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .camera__tilt--ok {

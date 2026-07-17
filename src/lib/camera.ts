@@ -88,7 +88,8 @@ export async function requestGyroPermission(): Promise<boolean> {
   }
 }
 
-const VERTICAL_TOLERANCE_DEG = 7;
+/** 수직 허용 범위(±도) — 층위 2 자이로 표시(2-8c)도 이 값을 단일 출처로 사용 */
+export const VERTICAL_TOLERANCE_DEG = 7;
 
 /** 기울기 감시 시작. 반환된 함수를 호출하면 감시를 중단한다. */
 export function watchTilt(onTilt: (t: TiltState) => void): () => void {

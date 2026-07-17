@@ -1,4 +1,5 @@
-// 2-8b E2E 스모크 — 모드 선택 → 신체 정보 입력 → 카메라 → 뒤로가기(입력 유지)
+// 2-8b/2-8c E2E 스모크 — 모드 선택 → 신체 정보 입력 → 카메라(층위 1 안내
+// 오버레이) → 뒤로가기(입력 유지) → 재진입(안내 생략 + ❓ 재열람)
 //
 // 실행: node tests/e2e-profile-flow.mjs  (사전에 npm run dev가 5173에서 떠 있어야 함)
 // Chrome 가짜 카메라 방식 (Phase 1 검증 스크립트와 동일 — CLAUDE.md 13-4 누적 자산)
@@ -59,7 +60,18 @@ try {
   await page.waitForSelector('.camera', { timeout: 10000 });
   check('다음 → 카메라 화면 진입', true);
 
-  // 5) 카메라 뒤로 → 프로필 화면, 입력값 유지 (App 보관 원칙)
+  // 5) 층위 1 — 첫 카메라 진입 시 정적 안내 오버레이 자동 표시 (2-8c)
+  await page.waitForSelector('.camera-guide', { timeout: 5000 });
+  const itemCount = await page.$$eval('.camera-guide__list li', (l) => l.length);
+  check(`안내 오버레이 자동 표시 + 항목 5개 (실제 ${itemCount})`, itemCount === 5);
+  await page.click('.camera-guide__confirm');
+  const guideGone = (await page.$('.camera-guide')) === null;
+  check('확인했어요 → 안내 오버레이 닫힘', guideGone);
+
+  // 6) 층위 2 — 실루엣 가이드 표시
+  check('실루엣 가이드 표시', (await page.$('.camera__silhouette')) !== null);
+
+  // 7) 카메라 뒤로 → 프로필 화면, 입력값 유지 (App 보관 원칙)
   await page.waitForSelector('.camera__back', { timeout: 5000 });
   await page.click('.camera__back');
   await page.waitForSelector('.profile', { timeout: 5000 });
@@ -68,7 +80,20 @@ try {
   check(`뒤로가기 후 키 입력값 유지 (${kept})`, kept === '172');
   check(`뒤로가기 후 몸무게 입력값 유지 (${keptW})`, keptW === '68');
 
-  // 6) 프로필에서 뒤로 → 모드 선택
+  // 8) 카메라 재진입 — 안내는 다시 자동 표시되지 않음 (guideSeen, App 보관)
+  await page.click(nextBtn);
+  await page.waitForSelector('.camera', { timeout: 10000 });
+  check('재진입 시 안내 자동 표시 안 함', (await page.$('.camera-guide')) === null);
+
+  // 9) ❓ 버튼으로 안내 재열람 가능
+  await page.click('.camera__help');
+  await page.waitForSelector('.camera-guide', { timeout: 3000 });
+  check('❓ 버튼으로 안내 재열람', true);
+  await page.click('.camera-guide__confirm');
+
+  // 10) 프로필에서 뒤로 → 모드 선택
+  await page.click('.camera__back');
+  await page.waitForSelector('.profile', { timeout: 5000 });
   await page.click('.profile__btn:not(.profile__btn--primary)');
   await page.waitForSelector('.mode-select', { timeout: 5000 });
   check('프로필 뒤로 → 모드 선택 화면', true);

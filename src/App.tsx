@@ -17,6 +17,8 @@ function App() {
   // 키(필수)·몸무게(선택) — 척도 캘리브레이션·BMI 보정 입력(2-7b).
   // 재촬영·뒤로가기 후에도 유지되도록 App이 보관 (Phase 1 배운 것 3번)
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  // 층위 1 정적 안내(2-8c) — 세션 첫 카메라 진입에만 자동 표시 (재촬영 시 생략)
+  const [guideSeen, setGuideSeen] = useState(false);
   // 전/후면 선택 — 재촬영으로 카메라에 재진입해도 유지
   const [facing, setFacing] = useState<CameraFacing>('environment');
   // 셔터 타이머 — facing과 동일하게 재진입해도 유지
@@ -69,6 +71,8 @@ function App() {
         }
         onBack={() => setScreen('profile')}
         onShutter={handleShutter}
+        showGuide={!guideSeen}
+        onDismissGuide={() => setGuideSeen(true)}
       />
     );
   }

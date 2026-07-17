@@ -5,6 +5,7 @@ import {
   startCamera,
   stopCamera,
   watchTilt,
+  VERTICAL_TOLERANCE_DEG as TILT_TOLERANCE_DEG,
   type CameraFacing,
   type TiltState,
 } from '../lib/camera';
@@ -25,7 +26,19 @@ interface CameraViewProps {
   onBack: () => void;
   /** 촬영 버튼 탭 시 현재 비디오 프레임 전달 — 캡처 파이프라인은 Step 1-6 */
   onShutter: (video: HTMLVideoElement) => void;
+  /** 층위 1 정적 안내(2-8c) — 세션 첫 진입에만 자동 표시되도록 App이 보관 */
+  showGuide: boolean;
+  onDismissGuide: () => void;
 }
+
+/** 층위 1 — 촬영 전 정적 안내 항목 (CLAUDE.md 전략 1 4층위 명세) */
+const GUIDE_ITEMS: { icon: string; text: (refName: string) => string }[] = [
+  { icon: '👕', text: () => '몸에 밀착되는 옷을 입어 주세요 — 헐렁한 옷은 측정을 크게 왜곡해요' },
+  { icon: '📐', text: (ref) => `${ref}를 가슴에 평평하게 대 주세요` },
+  { icon: '📏', text: () => '약 2m 거리에서, 전신이 프레임에 꽉 차게 나오도록' },
+  { icon: '📱', text: () => '카메라는 배꼽~가슴 높이에서 수직으로 (거치대 + 타이머 활용)' },
+  { icon: '🧍', text: () => '몸을 화면 정중앙에 — 가장자리는 광각 왜곡이 생겨요' },
+];
 
 /** 촬영 화면 — 전/후면 카메라 + 전신/기준물 가이드 오버레이 + 자이로 수직 표시 */
 function CameraView({
@@ -36,9 +49,13 @@ function CameraView({
   onCycleTimer,
   onBack,
   onShutter,
+  showGuide,
+  onDismissGuide,
 }: CameraViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
+  // 층위 1 안내: 세션 첫 진입엔 자동으로 열리고, 이후엔 ❓ 버튼으로 재열람
+  const [guideOpen, setGuideOpen] = useState(showGuide);
   const [tilt, setTilt] = useState<TiltState | null>(null);
   const [needsGyroTap, setNeedsGyroTap] = useState(false);
   // 스트림 준비 전(초기 로딩·전환 중) 셔터를 막아 빈 프레임 캡처를 방지
@@ -144,28 +161,53 @@ function CameraView({
         }
       />
 
-      {/* 가이드 오버레이: 전신 프레임 + 기준물 위치 */}
+      {/* 층위 2 — 정중앙 실루엣 가이드 (광각 가장자리 회피) + 기준물 위치 */}
       <div className="camera__overlay" aria-hidden="true">
-        <div className="camera__body-frame" />
+        <svg
+          className="camera__silhouette"
+          viewBox="0 0 100 200"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <circle cx="50" cy="14" r="12" />
+          <path
+            d="M44 27 L30 34 L18 78 L26 82 L34 52 L33 96 L38 186 L48 186
+               L50 120 L52 186 L62 186 L67 96 L66 52 L74 82 L82 78 L70 34
+               L56 27 Z"
+          />
+        </svg>
         <div className="camera__ref-guide">
           {mode === 'simple' ? '💳 카드를 여기(가슴 부근)에' : '🔳 마커를 여기(가슴 부근)에'}
         </div>
       </div>
 
-      {/* 상단 바: 뒤로 + 안내 + 수직 표시 */}
+      {/* 상단 바: 뒤로 + 안내 + 자이로 2축(좌우 수평·앞뒤 기울기) 표시 */}
       <div className="camera__top">
         <button type="button" className="camera__back" onClick={onBack}>
           ←
         </button>
-        <span className="camera__hint">약 2m 거리에서 전신이 프레임에 들어오게</span>
+        <span className="camera__hint">약 2m 거리, 전신을 프레임에 꽉 차게</span>
         {tilt && (
-          <span
-            className={
-              'camera__tilt ' +
-              (tilt.isVertical ? 'camera__tilt--ok' : 'camera__tilt--bad')
-            }
-          >
-            {tilt.isVertical ? '📱 수직 OK' : '📱 폰을 수직으로'}
+          <span className="camera__tilt-group">
+            <span
+              className={
+                'camera__tilt ' +
+                (Math.abs(tilt.rollDeg) <= TILT_TOLERANCE_DEG
+                  ? 'camera__tilt--ok'
+                  : 'camera__tilt--bad')
+              }
+            >
+              {Math.abs(tilt.rollDeg) <= TILT_TOLERANCE_DEG ? '↔ 수평 OK' : '↔ 좌우 수평을'}
+            </span>
+            <span
+              className={
+                'camera__tilt ' +
+                (Math.abs(tilt.pitchDeg) <= TILT_TOLERANCE_DEG
+                  ? 'camera__tilt--ok'
+                  : 'camera__tilt--bad')
+              }
+            >
+              {Math.abs(tilt.pitchDeg) <= TILT_TOLERANCE_DEG ? '↕ 수직 OK' : '↕ 폰을 세워서'}
+            </span>
           </span>
         )}
         {needsGyroTap && (
@@ -173,7 +215,40 @@ function CameraView({
             수직 가이드 켜기
           </button>
         )}
+        <button
+          type="button"
+          className="camera__help"
+          aria-label="촬영 방법 안내"
+          onClick={() => setGuideOpen(true)}
+        >
+          ?
+        </button>
       </div>
+
+      {/* 층위 1 — 촬영 전 정적 안내 (세션 첫 진입 자동 표시, ❓로 재열람) */}
+      {guideOpen && (
+        <div className="camera-guide" role="dialog" aria-label="촬영 방법 안내">
+          <h2 className="camera-guide__title">정확한 측정을 위한 촬영 방법</h2>
+          <ul className="camera-guide__list">
+            {GUIDE_ITEMS.map(({ icon, text }) => (
+              <li key={icon}>
+                <span className="camera-guide__icon">{icon}</span>
+                {text(mode === 'simple' ? '카드' : '마커')}
+              </li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            className="camera-guide__confirm"
+            onClick={() => {
+              setGuideOpen(false);
+              onDismissGuide();
+            }}
+          >
+            확인했어요
+          </button>
+        </div>
+      )}
 
       {/* 카운트다운 표시 */}
       {countdown !== null && countdown > 0 && (
