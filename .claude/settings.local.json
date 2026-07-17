@@ -74,7 +74,13 @@
       "PowerShell(cd C:\\\\claude_code\\\\FITME; node tests/e2e-autoshoot.mjs; \"=== exit $LASTEXITCODE ===\")",
       "PowerShell(cd C:\\\\claude_code\\\\FITME\\\\server; Start-Process -FilePath \".\\\\venv\\\\Scripts\\\\uvicorn.exe\" -ArgumentList \"main:app --port 8000\" -WindowStyle Hidden; Start-Sleep -Seconds 4; \\(Invoke-RestMethod http://127.0.0.1:8000/health\\).status)",
       "PowerShell(cd C:\\\\claude_code\\\\FITME\\\\server; .\\\\venv\\\\Scripts\\\\python.exe -m pytest tests/ -q --timeout=120 2>$null; \"exit=$LASTEXITCODE\")",
-      "Bash(git commit -m 'Phase 3-Step 4b 완료: fetchClothingSpec 실연동 + 의류 스펙 화면 — Step 3-4 전체 완료 *)"
+      "Bash(git commit -m 'Phase 3-Step 4b 완료: fetchClothingSpec 실연동 + 의류 스펙 화면 — Step 3-4 전체 완료 *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'docs: 로컬 권한 설정 보존 \\(3-4 세션 허용 목록\\) *)",
+      "Bash(git -C C:/claude_code/FITME add .claude/settings.local.json)",
+      "Bash(git -C C:/claude_code/FITME commit -m 'docs: 로컬 권한 설정 보존 \\(3-4 세션 허용 목록\\) *)",
+      "Bash(git -C C:/claude_code/FITME push)",
+      "Bash(git -C C:/claude_code/FITME status)"
     ]
   }
 }
