@@ -108,8 +108,21 @@
     AI 7회 없음, 새 캡처 시 무효화). clothingUrl은 App 보관(재진입 유지).
     검증: tsc+build, E2E 신규 11/11(`tests/e2e-clothing-url.mjs` — 검증·전환·
     캐시·값 유지), 회귀 14/14·17/17·7/7 전부 통과
-- **다음 시작 지점: 3-2 — Playwright로 무신사 사이즈 테이블 스크래핑**
-  (백엔드 `/clothing` + `routes/clothing.py`, 상품 1개 URL부터)
+  - **3-2 ✅ 완료 (2026-07-17)**: 무신사 사이즈 테이블 추출 —
+    `services/clothing_scrape.py` 신규. **DOM 파싱 대신 상품 페이지가 스스로
+    호출하는 공개 JSON API 2개 사용** (goods-detail.musinsa.com/api2/goods/{no}
+    → 브랜드·상품명·카테고리, …/actual-size → 사이즈별 실측 cm — 실상품 탐사로
+    확인. UI 리뉴얼에 강건, 요청도 상품당 2회로 최소). Playwright request
+    컨텍스트 + 일반 브라우저 UA. '가슴단면' 등 **단면 값은 원문 그대로 보존**
+    — 둘레 환산·ClothingSpec 정규화는 3-3 몫. requirements.txt에
+    playwright>=1.41.0,<2.0 추가(계획된 Phase 3 몫) + chromium 설치.
+    검증: pytest 16건 신규(오프라인 — URL 판정·파싱·에러 경로) 전체 69/69,
+    라이브 CLI 4종(아우터 5사이즈·바지 4사이즈 추출 성공 / 404 not-found /
+    타 쇼핑몰 unsupported — 한국어 안내 확인)
+- **다음 시작 지점: 3-3 — 표기 정규화** (단면→둘레 환산 + "95"/"L"/"Free"
+  라벨 처리 + `size_conversion.json` + ClothingSpec 매핑. 무신사 부위명:
+  상의 총장/어깨너비/가슴단면/소매길이, 하의 총장/허리단면/엉덩이단면/
+  허벅지단면/밑위/밑단단면)
   ⚠️ Phase 4 수동 검증(아는 옷 대조)은 Phase 2 편향 일정성 가정의 실질
   검증이므로, 늦어도 그 전에 Phase 2 수동 검증(반복 일관성)을 완료할 것
 
@@ -122,6 +135,16 @@
    완료 파일 수정이라 임의 진행 금지).
 2. React 제어 입력은 puppeteer 삼중 클릭으로 텍스트 교체가 안 됨 — E2E에서
    값을 바꿀 때는 Ctrl+A 선택 후 타이핑 (e2e-clothing-url.mjs 참조).
+3. ★ **무신사는 비공식 공개 API 2개로 사이즈표가 나온다** (2026-07-17 탐사):
+   `goods-detail.musinsa.com/api2/goods/{no}`(상품)와 `…/actual-size`(실측).
+   응답 봉투는 `{meta:{result:'SUCCESS'}, data:…}`. 부위 값은 **단면(flat)**
+   기준(예: 가슴단면 52.5 = 둘레 105). 비공식이므로 무신사가 바꾸면 깨질 수
+   있음 — 파싱은 순수 함수로 분리해 두어(parse_goods/parse_sizes) 구조 변경
+   시 오프라인 테스트로 즉시 감지·수정 가능. 요청은 상품당 2회(부하 최소),
+   일반 브라우저 UA 필수.
+4. **Playwright sync API는 FastAPI async 라우트에서 직접 못 씀** — 3-4에서
+   `/clothing` 라우트는 `def`(threadpool) 엔드포인트로 만들거나 async API로
+   전환할 것.
 - (이하 절차 기록은 추후 수동 검증 재개용으로 보존)
   - **수동 검증 세션 중간 기록 (2026-07-17)**: ① 자이로 2축 실폰 작동 확인
     (데스크톱 불가 항목). ±7° 맞추기 어렵다는 의견 있었으나 **사용자 결정으로
