@@ -40,6 +40,8 @@ interface CameraViewProps {
   /** 층위 3 자동 촬영(2-8d) — 재촬영 후에도 유지되도록 App이 보관 */
   autoShoot: boolean;
   onToggleAutoShoot: () => void;
+  /** 다중 프레임 캡처 진행 중(2-8e) — 셔터 잠금 + 정지 안내 + 폴링 일시정지 */
+  capturing: boolean;
 }
 
 /** 층위 1 — 촬영 전 정적 안내 항목 (CLAUDE.md 전략 1 4층위 명세) */
@@ -64,6 +66,7 @@ function CameraView({
   onDismissGuide,
   autoShoot,
   onToggleAutoShoot,
+  capturing,
 }: CameraViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -145,7 +148,7 @@ function CameraView({
   // 조건 연속 충족 → 자동 카운트다운, 카운트다운 중 조건 깨지면 취소.
   // 서버 미응답이어도 수동 촬영 경로는 그대로 살아 있다.
   useEffect(() => {
-    if (!autoShoot || !ready || guideOpen) return;
+    if (!autoShoot || !ready || guideOpen || capturing) return;
     let stopped = false;
     let timer: number | undefined;
     readyStreak.current = 0;
@@ -191,7 +194,7 @@ function CameraView({
       stopped = true;
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, [autoShoot, ready, guideOpen, mode]);
+  }, [autoShoot, ready, guideOpen, mode, capturing]);
 
   const handleShutterClick = () => {
     if (countdown !== null) {
@@ -340,6 +343,13 @@ function CameraView({
         </div>
       )}
 
+      {/* 다중 프레임 캡처 중 안내 (약 2초) — 흔들리면 중앙값 품질이 떨어진다 */}
+      {capturing && (
+        <div className="camera__capturing" aria-live="assertive">
+          📸 측정용 사진 여러 장을 찍고 있어요 — 움직이지 마세요
+        </div>
+      )}
+
       {/* 층위 3 — 자동 촬영 토글 + 실시간 판정 배너 */}
       {!guideOpen && (
         <div className="camera__status">
@@ -393,7 +403,7 @@ function CameraView({
             (countdown !== null ? ' camera__shutter--counting' : '')
           }
           aria-label={countdown !== null ? '카운트다운 취소' : '촬영'}
-          disabled={!ready}
+          disabled={!ready || capturing}
           onClick={handleShutterClick}
         />
         <button

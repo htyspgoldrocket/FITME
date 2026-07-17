@@ -8,12 +8,14 @@
 // ============================================================
 
 import type {
+  AnalyzeResponse,
   BodyMeasurements,
   CapturedImage,
   ClothingSpec,
   FitResult,
   MeasurementMode,
   PhotoCheckResult,
+  UserProfile,
 } from '../types';
 
 /** 백엔드 베이스 경로 — dev는 Vite 프록시(/api → localhost:8000)가 중계 */
@@ -48,42 +50,36 @@ export async function checkPhoto(
 }
 
 /**
- * [STUB] 신체 치수 분석 — Phase 2에서 백엔드 `/analyze` 호출로 교체.
- * 지금은 타입 규격만 맞춘 더미 데이터를 반환한다 (실제 측정 아님).
+ * 신체 치수 분석 (2-8e — stub에서 실제 연동으로 교체 완료).
+ * POST /analyze: 기준물 검출 → 프레임별 랜드마크(프레임당 AI 1회, 기본 7회)
+ * → 다중 프레임 중앙값 + 키 캘리브레이션. 프레임 수만큼 AI를 호출하므로
+ * 오래 걸린다 (수십 초 ~ 수 분) — 타임아웃을 넉넉히 둔다.
+ *
+ * 미검출·추출 실패는 예외가 아니라 AnalyzeResponse.ok=false + error(한국어)로
+ * 돌아온다 (재촬영 안내용). 예외는 네트워크/서버 오류일 때만 던진다.
  */
-// TODO(Phase 2-8): 백엔드 POST /analyze 실제 연동으로 교체
 export async function analyzeBody(
   image: CapturedImage,
   mode: MeasurementMode,
-): Promise<BodyMeasurements> {
-  void image; // stub에서는 사용하지 않음
-  return {
-    height: 175,
-    shoulder_width: 45,
-    chest_circumference: 96,
-    waist_circumference: 80,
-    hip_circumference: 95,
-    arm_length: 58,
-    inseam: 78,
-    torso_length: 62,
-    confidence: {
-      height: 'high',
-      shoulder_width: 'high',
-      chest_circumference: 'medium',
-      waist_circumference: 'medium',
-      hip_circumference: 'medium',
-      arm_length: 'high',
-      inseam: 'medium',
-      torso_length: 'medium',
-    },
-    mode,
-    reference: {
-      type: mode === 'simple' ? 'card' : 'aruco',
-      realWidthMm: mode === 'simple' ? 85.6 : 50,
-      realHeightMm: mode === 'simple' ? 53.98 : 50,
-      detected: true, // stub이므로 항상 true (실제 검출 아님)
-    },
-  };
+  profile: UserProfile | null,
+  timeoutMs = 180_000,
+): Promise<AnalyzeResponse> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image, mode, ...(profile ? { profile } : {}) }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`analyze 실패: HTTP ${res.status}`);
+    }
+    return (await res.json()) as AnalyzeResponse;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**

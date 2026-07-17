@@ -71,6 +71,16 @@
     Vite 프록시 /api→127.0.0.1:8000 신설(폰 터널 1개로 백엔드 커버).
     검증: E2E 신규 7/7(음성=초록 캠, 양성=마커 y4m로 자동 촬영→미리보기까지
     실백엔드 통짜) + 회귀 14/14. y4m 생성기 tests/gen_fake_camera.py
+  - **2-8e ✅ 완료 (2026-07-17)**: 7프레임 캡처(`captureFramesFromVideo`,
+    350ms×7≈2.1초, 캡처 중 셔터 잠금+정지 안내+폴링 일시정지) +
+    `analyzeBody` stub→실제 /analyze(AnalyzeResponse, 타임아웃 180초 —
+    프레임당 AI 1회라 장시간) + 측정 결과 화면 `MeasureResult.tsx`
+    (로딩/네트워크 오류·재시도/ok:false 재촬영/8항목 테이블+신뢰도 배지+
+    경고 접기). Phase 1 stub 3종 중 analyzeBody 교체 완료.
+    검증: E2E 신규 11/11 — 가짜 백엔드(tests/e2e_fake_backend.py, 랜드마크만
+    합성 패치·AI 0회)로 frames=7·profile 전송, 백엔드 다운→오류→재시도→
+    성공 테이블(키 172.0 정확 복원)까지 통짜. 회귀 14/14+7/7, 스크린샷 확인.
+    suspect 강등(마커-키 척도 불일치) 실동작 확인
   - 완료 후 Phase 2 Gate(조정된 기준) 검증 진행
   - **Gate 기준(조정, 2026-07-16)**: 일관성(반복 편차 2cm)은 길이 항목+어깨에
     적용, 둘레 3종은 알려진 한계 — CLAUDE.md 13-2

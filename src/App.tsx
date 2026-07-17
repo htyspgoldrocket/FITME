@@ -3,12 +3,13 @@ import ModeSelect from './components/ModeSelect';
 import ProfileInput from './components/ProfileInput';
 import CameraView, { TIMER_OPTIONS, type TimerSeconds } from './components/CameraView';
 import PhotoPreview from './components/PhotoPreview';
-import { captureFromVideo } from './lib/image';
+import MeasureResult from './components/MeasureResult';
+import { captureFramesFromVideo } from './lib/image';
 import type { CameraFacing } from './lib/camera';
 import type { CapturedImage, MeasurementMode, UserProfile } from './types';
 
-/** 앱 화면 단계 — 모드 선택 → 신체 정보(2-8b) → 카메라 → 미리보기 */
-type Screen = 'mode-select' | 'profile' | 'camera' | 'preview' | 'done';
+/** 앱 화면 단계 — 모드 선택 → 신체 정보(2-8b) → 카메라 → 미리보기 → 측정 결과(2-8e) */
+type Screen = 'mode-select' | 'profile' | 'camera' | 'preview' | 'result';
 
 function App() {
   const [screen, setScreen] = useState<Screen>('mode-select');
@@ -31,12 +32,20 @@ function App() {
     setScreen('profile');
   };
 
-  const handleShutter = (video: HTMLVideoElement) => {
+  // 다중 프레임 캡처 중 여부 — 캡처 약 2초 동안 카메라 화면 유지 + 중복 셔터 방지
+  const [capturing, setCapturing] = useState(false);
+
+  const handleShutter = async (video: HTMLVideoElement) => {
+    if (capturing) return;
+    setCapturing(true);
     try {
-      setImage(captureFromVideo(video));
+      // 7프레임(전략 3) — 캡처 완료까지 카메라가 언마운트되지 않아야 한다
+      setImage(await captureFramesFromVideo(video));
       setScreen('preview');
     } catch (e) {
       alert(e instanceof Error ? e.message : String(e));
+    } finally {
+      setCapturing(false);
     }
   };
 
@@ -77,6 +86,7 @@ function App() {
         onDismissGuide={() => setGuideSeen(true)}
         autoShoot={autoShoot}
         onToggleAutoShoot={() => setAutoShoot((v) => !v)}
+        capturing={capturing}
       />
     );
   }
@@ -87,24 +97,26 @@ function App() {
         image={image}
         mode={mode}
         onRetake={() => setScreen('camera')}
-        onConfirm={() => setScreen('done')}
+        onConfirm={() => setScreen('result')}
       />
     );
   }
 
-  // Phase 1의 끝 — 사진 확정. 측정(analyzeBody 실제 호출)은 Phase 2에서 연결.
-  return (
-    <main className="placeholder">
-      <p>✅ 사진이 준비되었습니다 ({image?.width}×{image?.height}px)</p>
-      <p>신체 치수 분석은 Phase 2에서 연결됩니다.</p>
-      <button type="button" onClick={() => setScreen('camera')}>
-        다시 촬영
-      </button>
-      <button type="button" onClick={() => setScreen('mode-select')}>
-        처음으로
-      </button>
-    </main>
-  );
+  // 측정 결과 (2-8e) — /analyze 호출·로딩·실패 처리는 MeasureResult가 담당
+  if (screen === 'result' && image !== null) {
+    return (
+      <MeasureResult
+        image={image}
+        mode={mode}
+        profile={profile}
+        onRetake={() => setScreen('camera')}
+        onRestart={() => setScreen('mode-select')}
+      />
+    );
+  }
+
+  // 도달 불가 상태(예: image 없이 preview/result) — 처음으로 복귀
+  return <ModeSelect onSelect={handleModeSelect} />;
 }
 
 export default App;
