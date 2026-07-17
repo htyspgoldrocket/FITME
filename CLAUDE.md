@@ -339,20 +339,34 @@ export interface AnalyzeResponse {
 }
 
 // ===== 의류 스펙 (Phase 3 산출물) =====
+// 부위 필드는 전부 선택 — 의류 종류마다 제공 부위가 다르다 (무신사 실증:
+// 상의 = 가슴·어깨·소매·총장, 하의 = 허리·엉덩이·허벅지·밑위·총장·밑단).
+// 없는 부위를 0 등 가짜 숫자로 채우지 않는다 (규칙 1). 단면(flat) 표기는
+// ×2로 둘레 환산해 저장한다 (3-3 결정, 2026-07-17).
 export interface ClothingSize {
   label: string;         // 원본 표기: "M", "95", "L", "Free"
-  chest_cm: number;      // 정규화된 실측 (cm)
-  waist_cm: number;
-  hip_cm: number;
+  chest_cm?: number;     // 가슴둘레 (단면×2 환산)
+  waist_cm?: number;     // 허리둘레 (단면×2)
+  hip_cm?: number;       // 엉덩이둘레 (단면×2)
+  shoulder_cm?: number;  // 어깨너비 (직선)
+  sleeve_cm?: number;    // 소매길이
+  length_cm?: number;    // 총장
+  thigh_cm?: number;     // 허벅지둘레 (단면×2)
+  rise_cm?: number;      // 밑위
+  hem_cm?: number;       // 밑단둘레 (단면×2)
+  estimated?: boolean;   // true = 실측이 아닌 호칭 기반 근사 (label 변환표 산출)
 }
 
 export interface ClothingSpec {
   brand: string;
   url: string;
   category: 'top' | 'bottom' | 'dress' | 'outer';
+  productName?: string;        // 표시용 상품명
   fabric?: string;
   stretch?: 'none' | 'low' | 'high';
   sizes: ClothingSize[];       // 정규화된 사이즈 목록
+  needsUserInput?: boolean;    // 정규화 불가 표기 존재 → 사용자 실측 입력 요청
+  warnings?: string[];         // 정규화 과정 경고 (한국어)
 }
 
 // ===== 핏 스코어 (Phase 4 산출물) =====

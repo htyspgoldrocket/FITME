@@ -119,10 +119,23 @@
     검증: pytest 16건 신규(오프라인 — URL 판정·파싱·에러 경로) 전체 69/69,
     라이브 CLI 4종(아우터 5사이즈·바지 4사이즈 추출 성공 / 404 not-found /
     타 쇼핑몰 unsupported — 한국어 안내 확인)
-- **다음 시작 지점: 3-3 — 표기 정규화** (단면→둘레 환산 + "95"/"L"/"Free"
-  라벨 처리 + `size_conversion.json` + ClothingSpec 매핑. 무신사 부위명:
-  상의 총장/어깨너비/가슴단면/소매길이, 하의 총장/허리단면/엉덩이단면/
-  허벅지단면/밑위/밑단단면)
+  - **3-3 ✅ 완료 (2026-07-17)**: 표기 정규화 — `services/clothing_normalize.py`
+    + `data/size_conversion.json`(부위명→필드 매핑·단면×2·카테고리 키워드·
+    호칭 근사표가 단일 출처). **ClothingSize/ClothingSpec 계약 확장**(규칙 6:
+    CLAUDE.md 6장→types/index.ts→schemas.py 동기화): 부위 필드 전부 선택
+    (의류 종류마다 제공 부위가 다름 — 없는 부위를 0으로 채우지 않음, 규칙 1)
+    + shoulder/sleeve/length/thigh/rise/hem 추가(어깨는 측정 신뢰 최상 항목이라
+    Phase 4 핏에 중요) + estimated(호칭 근사 표시)/needsUserInput/warnings.
+    호칭 폴백: 상의 80~120=가슴 호칭, 하의 24~44=인치, 60~120=cm 호칭,
+    S~3XL 근사표, Free류=변환 불가→needsUserInput (실측 있으면 폴백 미사용 —
+    무신사는 실측 제공이라 사실상 타 쇼핑몰 대비용). 검증: pytest 14건 신규
+    (Gate 4표기 "95"/"L"/"38"/"Free" 포함, Pydantic 계약 통과 확인) 전체
+    83/83 + tsc, 라이브 통합 2종(아우터 chest 105~135 / 바지 waist 74~86 —
+    상식 범위)
+- **다음 시작 지점: 3-4 — `fetchClothingSpec` stub→실제** (백엔드
+  `routes/clothing.py` POST /clothing: scrape+normalize 배선, Playwright
+  sync라 def 엔드포인트 필수(배운 것 4번) + SQLite 캐시 + 프론트
+  clothing-spec 화면을 stub에서 실제 표시로 교체 + E2E)
   ⚠️ Phase 4 수동 검증(아는 옷 대조)은 Phase 2 편향 일정성 가정의 실질
   검증이므로, 늦어도 그 전에 Phase 2 수동 검증(반복 일관성)을 완료할 것
 

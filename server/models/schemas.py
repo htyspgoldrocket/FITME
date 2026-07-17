@@ -49,20 +49,33 @@ class BodyMeasurements(BaseModel):
 
 
 # ===== 의류 스펙 (Phase 3 산출물) =====
+# 부위 필드는 전부 선택 — 의류 종류마다 제공 부위가 다르다 (무신사 실증).
+# 없는 부위를 0 등 가짜 숫자로 채우지 않는다 (규칙 1). 단면(flat) 표기는
+# ×2로 둘레 환산해 저장한다 (3-3 결정, 2026-07-17).
 class ClothingSize(BaseModel):
-    label: str       # 원본 표기: "M", "95", "L", "Free"
-    chest_cm: float  # 정규화된 실측 (cm)
-    waist_cm: float
-    hip_cm: float
+    label: str                            # 원본 표기: "M", "95", "L", "Free"
+    chest_cm: Optional[float] = None      # 가슴둘레 (단면×2 환산)
+    waist_cm: Optional[float] = None      # 허리둘레 (단면×2)
+    hip_cm: Optional[float] = None        # 엉덩이둘레 (단면×2)
+    shoulder_cm: Optional[float] = None   # 어깨너비 (직선)
+    sleeve_cm: Optional[float] = None     # 소매길이
+    length_cm: Optional[float] = None     # 총장
+    thigh_cm: Optional[float] = None      # 허벅지둘레 (단면×2)
+    rise_cm: Optional[float] = None       # 밑위
+    hem_cm: Optional[float] = None        # 밑단둘레 (단면×2)
+    estimated: Optional[bool] = None      # true = 호칭 기반 근사 (실측 아님)
 
 
 class ClothingSpec(BaseModel):
     brand: str
     url: str
     category: Literal["top", "bottom", "dress", "outer"]
+    productName: Optional[str] = None            # 표시용 상품명
     fabric: Optional[str] = None
     stretch: Optional[Literal["none", "low", "high"]] = None
-    sizes: list[ClothingSize]  # 정규화된 사이즈 목록
+    sizes: list[ClothingSize]                    # 정규화된 사이즈 목록
+    needsUserInput: Optional[bool] = None        # 정규화 불가 → 사용자 실측 입력 요청
+    warnings: Optional[list[str]] = None         # 정규화 과정 경고 (한국어)
 
 
 # ===== 핏 스코어 (Phase 4 산출물) =====

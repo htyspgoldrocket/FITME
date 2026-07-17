@@ -1,0 +1,44 @@
+{
+  "_comment": "사이즈 정규화 테이블 (3-3). part_map: 쇼핑몰 부위명 -> ClothingSize 필드 (factor 2 = 단면->둘레 환산). category_keywords: 카테고리 경로/의류종류명 -> ClothingSpec.category (앞 항목 우선). label_table: 실측이 없을 때만 쓰는 호칭 기반 근사(cm) — estimated:true로 표시되며 실측이 아니다.",
+  "part_map": {
+    "가슴단면": { "field": "chest_cm", "factor": 2 },
+    "허리단면": { "field": "waist_cm", "factor": 2 },
+    "엉덩이단면": { "field": "hip_cm", "factor": 2 },
+    "어깨너비": { "field": "shoulder_cm", "factor": 1 },
+    "소매길이": { "field": "sleeve_cm", "factor": 1 },
+    "총장": { "field": "length_cm", "factor": 1 },
+    "허벅지단면": { "field": "thigh_cm", "factor": 2 },
+    "밑위": { "field": "rise_cm", "factor": 1 },
+    "밑단단면": { "field": "hem_cm", "factor": 2 }
+  },
+  "category_keywords": [
+    { "contains": "원피스", "category": "dress" },
+    { "contains": "아우터", "category": "outer" },
+    { "contains": "점퍼", "category": "outer" },
+    { "contains": "재킷", "category": "outer" },
+    { "contains": "코트", "category": "outer" },
+    { "contains": "패딩", "category": "outer" },
+    { "contains": "바지", "category": "bottom" },
+    { "contains": "팬츠", "category": "bottom" },
+    { "contains": "데님", "category": "bottom" },
+    { "contains": "스커트", "category": "bottom" },
+    { "contains": "상의", "category": "top" },
+    { "contains": "티셔츠", "category": "top" },
+    { "contains": "셔츠", "category": "top" },
+    { "contains": "니트", "category": "top" },
+    { "contains": "맨투맨", "category": "top" },
+    { "contains": "후드", "category": "top" }
+  ],
+  "label_table": {
+    "_comment": "호칭 -> 근사 cm. top/outer/dress는 chest_cm, bottom은 waist_cm 기준. 숫자 호칭 규칙은 코드(clothing_normalize.py) 참조: 상의 80~120 = 가슴둘레 호칭 그대로, 하의 24~44 = 인치(x2.54), 하의 60~120 = cm 호칭 그대로.",
+    "alpha_top_chest": {
+      "XS": 85, "S": 90, "M": 95, "L": 100, "XL": 105,
+      "2XL": 110, "XXL": 110, "3XL": 115, "XXXL": 115
+    },
+    "alpha_bottom_waist": {
+      "XS": 67, "S": 71, "M": 76, "L": 81, "XL": 86,
+      "2XL": 91, "XXL": 91, "3XL": 96, "XXXL": 96
+    },
+    "unsupported": ["FREE", "ONE SIZE", "ONESIZE", "원사이즈", "F"]
+  }
+}
