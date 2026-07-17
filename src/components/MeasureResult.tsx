@@ -11,8 +11,13 @@ interface MeasureResultProps {
   image: CapturedImage;
   mode: MeasurementMode;
   profile: UserProfile | null;
+  /** 같은 사진의 이전 분석 결과 (3-1) — 의류 화면에서 뒤로 왔을 때 재분석(AI 7회) 방지 */
+  cached: AnalyzeResponse | null;
+  onLoaded: (response: AnalyzeResponse) => void;
   onRetake: () => void;
   onRestart: () => void;
+  /** 측정 성공 시에만 노출 — 의류 URL 입력(3-1)으로 진행 */
+  onNext: () => void;
 }
 
 /** 측정 항목 표시 순서·한국어 라벨 (BodyMeasurements 키와 1:1) */
@@ -39,16 +44,34 @@ type State =
   | { status: 'error'; message: string };
 
 /** 측정 결과 화면 (2-8e) — /analyze 호출·로딩·실패·결과 표시를 담당 */
-function MeasureResult({ image, mode, profile, onRetake, onRestart }: MeasureResultProps) {
+function MeasureResult({
+  image,
+  mode,
+  profile,
+  cached,
+  onLoaded,
+  onRetake,
+  onRestart,
+  onNext,
+}: MeasureResultProps) {
   const [state, setState] = useState<State>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0); // "다시 시도" 시 증가 → 재호출
 
+  // cached·onLoaded는 의존성에서 의도적으로 제외 — 캐시는 마운트 직후(attempt=0)
+  // 판단 전용이고, onLoaded로 캐시가 갱신될 때 재실행되면 무한 루프가 된다
   useEffect(() => {
+    if (attempt === 0 && cached !== null) {
+      setState({ status: 'done', response: cached });
+      return undefined;
+    }
     let cancelled = false;
     setState({ status: 'loading' });
     analyzeBody(image, mode, profile)
       .then((response) => {
-        if (!cancelled) setState({ status: 'done', response });
+        if (!cancelled) {
+          setState({ status: 'done', response });
+          onLoaded(response);
+        }
       })
       .catch((e) => {
         if (!cancelled) {
@@ -198,14 +221,19 @@ function MeasureResult({ image, mode, profile, onRetake, onRestart }: MeasureRes
         </details>
       )}
 
-      <p className="result__note">의류 사이즈 비교는 다음 단계(Phase 3)에서 연결됩니다.</p>
-
       <div className="result__actions">
         <button type="button" className="result__btn" onClick={onRetake}>
           다시 촬영
         </button>
         <button type="button" className="result__btn" onClick={onRestart}>
           처음으로
+        </button>
+        <button
+          type="button"
+          className="result__btn result__btn--primary"
+          onClick={onNext}
+        >
+          의류 사이즈 비교
         </button>
       </div>
     </div>

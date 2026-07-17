@@ -4,17 +4,38 @@ import ProfileInput from './components/ProfileInput';
 import CameraView, { TIMER_OPTIONS, type TimerSeconds } from './components/CameraView';
 import PhotoPreview from './components/PhotoPreview';
 import MeasureResult from './components/MeasureResult';
+import ClothingUrlInput from './components/ClothingUrlInput';
 import { captureFramesFromVideo } from './lib/image';
 import type { CameraFacing } from './lib/camera';
-import type { CapturedImage, MeasurementMode, UserProfile } from './types';
+import type {
+  AnalyzeResponse,
+  CapturedImage,
+  MeasurementMode,
+  UserProfile,
+} from './types';
 
-/** 앱 화면 단계 — 모드 선택 → 신체 정보(2-8b) → 카메라 → 미리보기 → 측정 결과(2-8e) */
-type Screen = 'mode-select' | 'profile' | 'camera' | 'preview' | 'result';
+/**
+ * 앱 화면 단계 — 모드 선택 → 신체 정보(2-8b) → 카메라 → 미리보기 →
+ * 측정 결과(2-8e) → 의류 URL 입력(3-1) → 의류 정보(3-2~3-4에서 구현)
+ */
+type Screen =
+  | 'mode-select'
+  | 'profile'
+  | 'camera'
+  | 'preview'
+  | 'result'
+  | 'clothing-url'
+  | 'clothing-spec';
 
 function App() {
   const [screen, setScreen] = useState<Screen>('mode-select');
   const [mode, setMode] = useState<MeasurementMode | null>(null);
   const [image, setImage] = useState<CapturedImage | null>(null);
+  // 같은 사진의 분석 결과 캐시 (3-1) — 의류 화면에서 뒤로 와도 재분석(AI 7회) 없음.
+  // 새 사진을 캡처하면 무효화한다
+  const [analysis, setAnalysis] = useState<AnalyzeResponse | null>(null);
+  // 의류 상품 페이지 URL (3-1) — 재입력 진입 시 유지되도록 App이 보관
+  const [clothingUrl, setClothingUrl] = useState<string | null>(null);
   // 키(필수)·몸무게(선택) — 척도 캘리브레이션·BMI 보정 입력(2-7b).
   // 재촬영·뒤로가기 후에도 유지되도록 App이 보관 (Phase 1 배운 것 3번)
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -41,6 +62,7 @@ function App() {
     try {
       // 7프레임(전략 3) — 캡처 완료까지 카메라가 언마운트되지 않아야 한다
       setImage(await captureFramesFromVideo(video));
+      setAnalysis(null); // 새 사진 → 이전 분석 캐시 무효화 (3-1)
       setScreen('preview');
     } catch (e) {
       alert(e instanceof Error ? e.message : String(e));
@@ -109,9 +131,56 @@ function App() {
         image={image}
         mode={mode}
         profile={profile}
+        cached={analysis}
+        onLoaded={setAnalysis}
         onRetake={() => setScreen('camera')}
         onRestart={() => setScreen('mode-select')}
+        onNext={() => setScreen('clothing-url')}
       />
+    );
+  }
+
+  // 의류 URL 입력 (3-1)
+  if (screen === 'clothing-url') {
+    return (
+      <ClothingUrlInput
+        initial={clothingUrl}
+        onSubmit={(url) => {
+          setClothingUrl(url);
+          setScreen('clothing-spec');
+        }}
+        onBack={() => setScreen('result')}
+      />
+    );
+  }
+
+  // 의류 정보 화면 — [Phase 3 stub] 3-2(무신사 스크래핑)~3-4(실연동)에서 채워진다.
+  // TODO(Phase 3-4): fetchClothingSpec 호출 + ClothingSpec 표시로 교체
+  if (screen === 'clothing-spec' && clothingUrl !== null) {
+    return (
+      <div className="result result--center clothing-spec">
+        <h2>의류 정보 확인</h2>
+        <p className="result__note">
+          [준비 중] 사이즈 추출은 다음 단계(3-2 무신사 스크래핑)에서 연결됩니다.
+        </p>
+        <p className="result__note">입력한 주소: {clothingUrl}</p>
+        <div className="result__actions">
+          <button
+            type="button"
+            className="result__btn"
+            onClick={() => setScreen('clothing-url')}
+          >
+            주소 다시 입력
+          </button>
+          <button
+            type="button"
+            className="result__btn"
+            onClick={() => setScreen('mode-select')}
+          >
+            처음으로
+          </button>
+        </div>
+      </div>
     );
   }
 
