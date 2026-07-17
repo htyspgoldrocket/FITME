@@ -106,6 +106,22 @@ class AnalyzeRequest(BaseModel):
     profile: Optional[UserProfile] = None
 
 
+# ===== /analyze 응답 (Phase 2-8a — 미검출·실패를 가짜 숫자 없이 전달) =====
+class AnalyzeStats(BaseModel):
+    runs: int                        # 랜드마크 추출에 성공한 프레임 수
+    spreadCm: dict[str, float]       # 항목별 반복 편차 (cm)
+    scale: dict[str, float | str]    # 사용 척도 요약 (역추적용 — measure.py stats.scale)
+
+
+class AnalyzeResponse(BaseModel):
+    ok: bool                                          # 측정 성공 여부
+    reference: ReferenceInfo                          # 검출 결과 (미검출: detected=False)
+    measurements: Optional[BodyMeasurements] = None   # ok=True일 때만
+    warnings: list[str] = []                          # 범위·해부학·척도·대칭 경고 (한국어)
+    stats: Optional[AnalyzeStats] = None              # ok=True일 때만
+    error: Optional[str] = None                       # ok=False 사유 (한국어, 재촬영 안내)
+
+
 # ===== /check-photo 요청 (2-7c) =====
 class CheckPhotoRequest(BaseModel):
     image: CapturedImage

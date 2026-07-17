@@ -57,6 +57,22 @@ export interface BodyMeasurements {
   reference: ReferenceInfo;    // 사용한 기준물 정보
 }
 
+// ===== /analyze 응답 (Phase 2-8a — 미검출·실패를 가짜 숫자 없이 전달) =====
+export interface AnalyzeStats {
+  runs: number;                            // 랜드마크 추출에 성공한 프레임 수
+  spreadCm: Record<string, number>;        // 항목별 반복 편차 (cm)
+  scale: Record<string, number | string>;  // 사용 척도 요약 (역추적용)
+}
+
+export interface AnalyzeResponse {
+  ok: boolean;                     // 측정 성공 여부
+  reference: ReferenceInfo;        // 기준물 검출 결과 (미검출이면 detected:false)
+  measurements?: BodyMeasurements; // ok=true일 때만 존재
+  warnings: string[];              // 범위·해부학·척도·대칭 경고 (한국어)
+  stats?: AnalyzeStats;            // ok=true일 때만 존재
+  error?: string;                  // ok=false 사유 (한국어, 재촬영 안내용)
+}
+
 // ===== 의류 스펙 (Phase 3 산출물) =====
 export interface ClothingSize {
   label: string;         // 원본 표기: "M", "95", "L", "Free"
