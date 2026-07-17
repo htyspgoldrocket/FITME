@@ -1,18 +1,22 @@
 import { useState } from 'react';
 import ModeSelect from './components/ModeSelect';
+import ProfileInput from './components/ProfileInput';
 import CameraView, { TIMER_OPTIONS, type TimerSeconds } from './components/CameraView';
 import PhotoPreview from './components/PhotoPreview';
 import { captureFromVideo } from './lib/image';
 import type { CameraFacing } from './lib/camera';
-import type { CapturedImage, MeasurementMode } from './types';
+import type { CapturedImage, MeasurementMode, UserProfile } from './types';
 
-/** 앱 화면 단계 — Phase 1 범위: 모드 선택 → 카메라 → 미리보기 */
-type Screen = 'mode-select' | 'camera' | 'preview' | 'done';
+/** 앱 화면 단계 — 모드 선택 → 신체 정보(2-8b) → 카메라 → 미리보기 */
+type Screen = 'mode-select' | 'profile' | 'camera' | 'preview' | 'done';
 
 function App() {
   const [screen, setScreen] = useState<Screen>('mode-select');
   const [mode, setMode] = useState<MeasurementMode | null>(null);
   const [image, setImage] = useState<CapturedImage | null>(null);
+  // 키(필수)·몸무게(선택) — 척도 캘리브레이션·BMI 보정 입력(2-7b).
+  // 재촬영·뒤로가기 후에도 유지되도록 App이 보관 (Phase 1 배운 것 3번)
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   // 전/후면 선택 — 재촬영으로 카메라에 재진입해도 유지
   const [facing, setFacing] = useState<CameraFacing>('environment');
   // 셔터 타이머 — facing과 동일하게 재진입해도 유지
@@ -20,7 +24,7 @@ function App() {
 
   const handleModeSelect = (selected: MeasurementMode) => {
     setMode(selected);
-    setScreen('camera');
+    setScreen('profile');
   };
 
   const handleShutter = (video: HTMLVideoElement) => {
@@ -34,6 +38,19 @@ function App() {
 
   if (screen === 'mode-select' || mode === null) {
     return <ModeSelect onSelect={handleModeSelect} />;
+  }
+
+  if (screen === 'profile') {
+    return (
+      <ProfileInput
+        initial={profile}
+        onSubmit={(p) => {
+          setProfile(p);
+          setScreen('camera');
+        }}
+        onBack={() => setScreen('mode-select')}
+      />
+    );
   }
 
   if (screen === 'camera') {
@@ -50,7 +67,7 @@ function App() {
             (t) => TIMER_OPTIONS[(TIMER_OPTIONS.indexOf(t) + 1) % TIMER_OPTIONS.length],
           )
         }
-        onBack={() => setScreen('mode-select')}
+        onBack={() => setScreen('profile')}
         onShutter={handleShutter}
       />
     );

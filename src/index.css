@@ -85,6 +85,106 @@ body {
   line-height: 1.6;
 }
 
+/* ===== 신체 정보 입력 화면 (2-8b) ===== */
+.profile {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.profile__header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.profile__header h1 {
+  margin: 0 0 4px;
+  font-size: 1.5rem;
+}
+
+.profile__header p {
+  margin: 0;
+  color: #9ca3af;
+}
+
+.profile__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile__label {
+  font-weight: 600;
+}
+
+.profile__required {
+  font-style: normal;
+  font-size: 0.78rem;
+  color: #f87171;
+}
+
+.profile__optional {
+  font-style: normal;
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+.profile__field input {
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid #374151;
+  background: #1f2937;
+  color: inherit;
+  font-size: 1.1rem;
+}
+
+.profile__field input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.profile__hint {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  line-height: 1.5;
+}
+
+.profile__hint--error {
+  color: #f87171;
+}
+
+.profile__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.profile__btn {
+  flex: 1;
+  padding: 14px 0;
+  border-radius: 12px;
+  border: 1px solid #4b5563;
+  background: #1f2937;
+  color: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.profile__btn--primary {
+  flex: 2;
+  border-color: #22c55e;
+  background: #15803d;
+  font-weight: 600;
+}
+
+.profile__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* ===== 카메라 화면 ===== */
 .camera {
   position: fixed;

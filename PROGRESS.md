@@ -51,6 +51,12 @@
     전달(규칙 1). CLAUDE.md 6장·types/index.ts·schemas.py 동기화.
     MAX_FRAMES=9 비용 상한. 테스트 11건 재작성(API 0회 — 합성 마커 + 추출
     mock), 전체 53/53 + tsc 통과
+  - **2-8b ✅ 완료 (2026-07-17)**: 키·몸무게 입력 UI — `ProfileInput.tsx` 신규,
+    화면 흐름 모드 선택→**신체 정보**→카메라로 확장. profile은 App 보관
+    (재촬영·뒤로가기 유지 — Phase 1 배운 것 3번). 입력 하드 한계(키 100~250,
+    몸무게 20~300)만 UI가 차단, 정밀 오타 검증은 r 판정(2-7b) 몫.
+    검증: tsc+build 통과, E2E 스모크 9/9 (`tests/e2e-profile-flow.mjs` —
+    puppeteer-core 정식 자산화, 13-4). analyzeBody에 profile 전달은 2-8e에서
   - 완료 후 Phase 2 Gate(조정된 기준) 검증 진행
   - **Gate 기준(조정, 2026-07-16)**: 일관성(반복 편차 2cm)은 길이 항목+어깨에
     적용, 둘레 3종은 알려진 한계 — CLAUDE.md 13-2

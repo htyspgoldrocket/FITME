@@ -1,0 +1,83 @@
+// 2-8b E2E 스모크 — 모드 선택 → 신체 정보 입력 → 카메라 → 뒤로가기(입력 유지)
+//
+// 실행: node tests/e2e-profile-flow.mjs  (사전에 npm run dev가 5173에서 떠 있어야 함)
+// Chrome 가짜 카메라 방식 (Phase 1 검증 스크립트와 동일 — CLAUDE.md 13-4 누적 자산)
+
+import puppeteer from 'puppeteer-core';
+
+const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const URL = 'http://localhost:5173';
+
+let failures = 0;
+function check(name, cond) {
+  console.log(`${cond ? 'PASS' : 'FAIL'}  ${name}`);
+  if (!cond) failures += 1;
+}
+
+const browser = await puppeteer.launch({
+  executablePath: CHROME,
+  headless: 'new',
+  args: [
+    '--use-fake-device-for-media-stream',
+    '--use-fake-ui-for-media-stream',
+    '--no-sandbox',
+  ],
+});
+
+try {
+  const page = await browser.newPage();
+  await page.setViewport({ width: 390, height: 844 }); // 모바일 비율
+  await page.goto(URL, { waitUntil: 'networkidle2', timeout: 20000 });
+
+  // 1) 모드 선택 → 프로필 화면 진입
+  await page.waitForSelector('.mode-card--simple', { timeout: 10000 });
+  await page.click('.mode-card--simple');
+  await page.waitForSelector('.profile', { timeout: 5000 });
+  check('모드 선택 후 신체 정보 입력 화면 진입', true);
+
+  const nextBtn = '.profile__btn--primary';
+  const heightInput = '.profile__field:nth-of-type(1) input';
+  const weightInput = '.profile__field:nth-of-type(2) input';
+
+  // 2) 키 미입력 → 다음 비활성
+  check('키 미입력 시 다음 버튼 비활성', await page.$eval(nextBtn, (b) => b.disabled));
+
+  // 3) 범위 밖 키(999) → 에러 힌트 + 비활성
+  await page.type(heightInput, '999');
+  const hasError = await page
+    .waitForSelector('.profile__hint--error', { timeout: 3000 })
+    .then(() => true, () => false);
+  check('범위 밖 키 입력 시 에러 힌트 표시', hasError);
+  check('범위 밖 키 입력 시 다음 버튼 비활성', await page.$eval(nextBtn, (b) => b.disabled));
+
+  // 4) 유효 입력 → 활성 → 카메라 진입
+  await page.$eval(heightInput, (el) => (el.value = ''));
+  await page.type(heightInput, '172');
+  await page.type(weightInput, '68');
+  check('유효 입력 시 다음 버튼 활성', await page.$eval(nextBtn, (b) => !b.disabled));
+  await page.click(nextBtn);
+  await page.waitForSelector('.camera', { timeout: 10000 });
+  check('다음 → 카메라 화면 진입', true);
+
+  // 5) 카메라 뒤로 → 프로필 화면, 입력값 유지 (App 보관 원칙)
+  await page.waitForSelector('.camera__back', { timeout: 5000 });
+  await page.click('.camera__back');
+  await page.waitForSelector('.profile', { timeout: 5000 });
+  const kept = await page.$eval(heightInput, (el) => el.value);
+  const keptW = await page.$eval(weightInput, (el) => el.value);
+  check(`뒤로가기 후 키 입력값 유지 (${kept})`, kept === '172');
+  check(`뒤로가기 후 몸무게 입력값 유지 (${keptW})`, keptW === '68');
+
+  // 6) 프로필에서 뒤로 → 모드 선택
+  await page.click('.profile__btn:not(.profile__btn--primary)');
+  await page.waitForSelector('.mode-select', { timeout: 5000 });
+  check('프로필 뒤로 → 모드 선택 화면', true);
+} catch (e) {
+  console.error('FAIL  예외 발생:', e.message);
+  failures += 1;
+} finally {
+  await browser.close();
+}
+
+console.log(failures === 0 ? '\n전체 통과' : `\n실패 ${failures}건`);
+process.exit(failures === 0 ? 0 : 1);
