@@ -29,6 +29,9 @@ server/tests/fixtures/*
 # E2E 가짜 카메라 영상 — tests/gen_fake_camera.py로 생성 (바이너리라 커밋 제외)
 tests/fake-marker.y4m
 
+# 의류 스펙 SQLite 캐시 — 로컬 생성물 (services/clothing_store.py)
+server/data/clothing_cache.sqlite
+
 # 로그
 *.log
 npm-debug.log*

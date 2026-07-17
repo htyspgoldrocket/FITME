@@ -68,7 +68,9 @@
       "PowerShell(cd C:\\\\claude_code\\\\FITME\\\\server; $env:PYTHONIOENCODING='utf-8'; .\\\\venv\\\\Scripts\\\\python.exe services\\\\clothing_scrape.py https://www.musinsa.com/products/6516683)",
       "PowerShell(cd C:\\\\claude_code\\\\FITME\\\\server; $env:PYTHONIOENCODING='utf-8'; .\\\\venv\\\\Scripts\\\\python.exe services\\\\clothing_scrape.py https://www.musinsa.com/products/6719352; Write-Output '=== 오류 경로: 존재하지 않는 상품 ==='; .\\\\venv\\\\Scripts\\\\python.exe services\\\\clothing_scrape.py https://www.musinsa.com/products/999999999; Write-Output '=== 오류 경로: 타 쇼핑몰 ==='; .\\\\venv\\\\Scripts\\\\python.exe services\\\\clothing_scrape.py https://www.29cm.co.kr/products/123)",
       "PowerShell(cd C:\\\\claude_code\\\\FITME\\\\server; .\\\\venv\\\\Scripts\\\\python.exe -m pytest tests/ -q 2>$null | Select-Object -Last 3; cd C:\\\\claude_code\\\\FITME; npx tsc --noEmit; Write-Output \"tsc exit: $LASTEXITCODE\")",
-      "PowerShell(cd C:\\\\claude_code\\\\FITME\\\\server; $env:PYTHONIOENCODING='utf-8'; .\\\\venv\\\\Scripts\\\\python.exe -m services.clothing_normalize https://www.musinsa.com/products/6516683; Write-Output '==='; .\\\\venv\\\\Scripts\\\\python.exe -m services.clothing_normalize https://www.musinsa.com/products/6719352)"
+      "PowerShell(cd C:\\\\claude_code\\\\FITME\\\\server; $env:PYTHONIOENCODING='utf-8'; .\\\\venv\\\\Scripts\\\\python.exe -m services.clothing_normalize https://www.musinsa.com/products/6516683; Write-Output '==='; .\\\\venv\\\\Scripts\\\\python.exe -m services.clothing_normalize https://www.musinsa.com/products/6719352)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Phase 3-Step 4a 완료: POST /clothing 백엔드 + SQLite 캐시 + ClothingResponse 계약 *)"
     ]
   }
 }

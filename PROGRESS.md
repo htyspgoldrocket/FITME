@@ -132,10 +132,19 @@
     (Gate 4표기 "95"/"L"/"38"/"Free" 포함, Pydantic 계약 통과 확인) 전체
     83/83 + tsc, 라이브 통합 2종(아우터 chest 105~135 / 바지 waist 74~86 —
     상식 범위)
-- **다음 시작 지점: 3-4 — `fetchClothingSpec` stub→실제** (백엔드
-  `routes/clothing.py` POST /clothing: scrape+normalize 배선, Playwright
-  sync라 def 엔드포인트 필수(배운 것 4번) + SQLite 캐시 + 프론트
-  clothing-spec 화면을 stub에서 실제 표시로 교체 + E2E)
+  - **3-4a ✅ 완료 (2026-07-17)**: 백엔드 POST /clothing —
+    `routes/clothing.py`(def 엔드포인트 — Playwright sync, 배운 것 4번) +
+    `services/clothing_store.py`(SQLite 캐시, 키 musinsa:{goodsNo}, TTL 24h,
+    DB는 gitignore) + **신규 계약 `ClothingResponse`**(ok/spec?/cached?/error?/
+    code? — 실패를 크래시 없이 한국어 안내로 전달, AnalyzeResponse 방식.
+    CLAUDE.md 6장→types/index.ts→schemas.py 동기화). 검증: pytest 6건 신규
+    (오프라인 — 성공+캐시 적중·실패 미캐시·unsupported·TTL 만료) 전체 89/89
+    + tsc, 라이브 3종(실상품 5사이즈 12.3초→캐시 0초 / 타 쇼핑몰 unsupported /
+    없는 상품 not-found)
+- **다음 시작 지점: 3-4b — 프론트** (`fetchClothingSpec` stub→실제
+  POST /clothing 호출(ClothingResponse) + clothing-spec 화면을 stub에서
+  실제 스펙 표시(로딩/오류/재시도, 사이즈 테이블, needsUserInput·warnings
+  표시)로 교체 + E2E → 완료 시 Step 3-4 전체 완료)
   ⚠️ Phase 4 수동 검증(아는 옷 대조)은 Phase 2 편향 일정성 가정의 실질
   검증이므로, 늦어도 그 전에 Phase 2 수동 검증(반복 일관성)을 완료할 것
 

@@ -104,6 +104,15 @@ export interface ClothingSpec {
   warnings?: string[];         // 정규화 과정 경고 (한국어)
 }
 
+// ===== /clothing 응답 (Phase 3-4 — 스크래핑 실패를 크래시 없이 전달) =====
+export interface ClothingResponse {
+  ok: boolean;
+  spec?: ClothingSpec;   // ok=true일 때만 존재
+  cached?: boolean;      // 서버 SQLite 캐시 적중 여부 (재조회는 무신사 접속 없음)
+  error?: string;        // ok=false 사유 (한국어, 사용자 안내용)
+  code?: 'unsupported' | 'not-found' | 'no-size' | 'network'; // 분기용
+}
+
 // ===== 핏 스코어 (Phase 4 산출물) =====
 export interface FitScore {
   part: string;                       // chest/waist/hip 등

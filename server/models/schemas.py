@@ -139,3 +139,16 @@ class AnalyzeResponse(BaseModel):
 class CheckPhotoRequest(BaseModel):
     image: CapturedImage
     mode: MeasurementMode
+
+
+# ===== /clothing 요청·응답 (Phase 3-4 — 스크래핑 실패를 크래시 없이 전달) =====
+class ClothingRequest(BaseModel):
+    url: str
+
+
+class ClothingResponse(BaseModel):
+    ok: bool
+    spec: Optional[ClothingSpec] = None    # ok=True일 때만 존재
+    cached: Optional[bool] = None          # SQLite 캐시 적중 여부
+    error: Optional[str] = None            # ok=False 사유 (한국어, 사용자 안내용)
+    code: Optional[Literal["unsupported", "not-found", "no-size", "network"]] = None
