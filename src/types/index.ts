@@ -118,6 +118,8 @@ export interface FitScore {
   part: string;                       // chest/waist/hip 등
   status: 'tight' | 'good' | 'loose';
   diff_cm: number;                    // 여유(+)/부족(-) cm
+  confidence?: 'high' | 'medium' | 'low'; // 해당 부위 측정 신뢰도 전파 (4-1) —
+                                          // low면 판정 자체가 불확실 (둘레 3종 등 12장 한계)
 }
 
 // ===== 최종 결과 (Phase 4~5 통합) =====

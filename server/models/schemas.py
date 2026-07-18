@@ -83,6 +83,8 @@ class FitScore(BaseModel):
     part: str                                   # chest/waist/hip 등
     status: Literal["tight", "good", "loose"]
     diff_cm: float                              # 여유(+)/부족(-) cm
+    # 해당 부위 측정 신뢰도 전파 (4-1) — low면 판정 자체가 불확실 (둘레 3종 등 12장 한계)
+    confidence: Optional[Confidence] = None
 
 
 # ===== 최종 결과 (Phase 4~5 통합) =====

@@ -88,7 +88,14 @@
       "Bash(git -C C:/claude_code/FITME commit -m 'docs: 로컬 권한 설정 보존 \\(검증 체계 정비 세션 허용 목록\\) *)",
       "WebSearch",
       "Bash(git -C C:/claude_code/FITME add -A)",
-      "Bash(git -C C:/claude_code/FITME commit -m 'docs: Phase 3 수동 검증 통과 + Gate 리포트 — 무신사 3종 대조 일치 \\(사용자 확인\\) *)"
+      "Bash(git -C C:/claude_code/FITME commit -m 'docs: Phase 3 수동 검증 통과 + Gate 리포트 — 무신사 3종 대조 일치 \\(사용자 확인\\) *)",
+      "Bash(git -C C:/claude_code/FITME tag phase-3-complete)",
+      "Bash(git -C C:/claude_code/FITME push --tags)",
+      "Bash(git -C C:/claude_code/FITME tag -l)",
+      "Bash(./venv/Scripts/python.exe -m pytest tests/ -q)",
+      "Bash(npx tsc *)",
+      "Bash(./venv/Scripts/python.exe \"C:/Users/htysp/AppData/Local/Temp/claude/C--claude-code-FITME/482887b4-8f08-4795-81cc-281b09766564/scratchpad/verify_fit_41.py\")",
+      "Bash(git -C C:/claude_code/FITME commit -m 'Phase 4-Step 1 완료: 부위별 FitScore 계산 — 같은 정의 쌍만 비교 + 신뢰도 전파 *)"
     ]
   }
 }
