@@ -80,7 +80,12 @@
       "Bash(git -C C:/claude_code/FITME add .claude/settings.local.json)",
       "Bash(git -C C:/claude_code/FITME commit -m 'docs: 로컬 권한 설정 보존 \\(3-4 세션 허용 목록\\) *)",
       "Bash(git -C C:/claude_code/FITME push)",
-      "Bash(git -C C:/claude_code/FITME status)"
+      "Bash(git -C C:/claude_code/FITME status)",
+      "Bash(git -C C:/claude_code/FITME add CLAUDE.md PROGRESS.md)",
+      "Bash(git -C C:/claude_code/FITME commit -m 'docs: 실기기 검증 체계 정비 — 프로덕션 빌드 절차·Phase 3 Gate 현실화·통합 체크리스트 *)",
+      "Bash(git -C C:/claude_code/FITME status --short)",
+      "Bash(git -C C:/claude_code/FITME log --oneline -1)",
+      "Bash(git -C C:/claude_code/FITME commit -m 'docs: 로컬 권한 설정 보존 \\(검증 체계 정비 세션 허용 목록\\) *)"
     ]
   }
 }
