@@ -95,7 +95,10 @@
       "Bash(./venv/Scripts/python.exe -m pytest tests/ -q)",
       "Bash(npx tsc *)",
       "Bash(./venv/Scripts/python.exe \"C:/Users/htysp/AppData/Local/Temp/claude/C--claude-code-FITME/482887b4-8f08-4795-81cc-281b09766564/scratchpad/verify_fit_41.py\")",
-      "Bash(git -C C:/claude_code/FITME commit -m 'Phase 4-Step 1 완료: 부위별 FitScore 계산 — 같은 정의 쌍만 비교 + 신뢰도 전파 *)"
+      "Bash(git -C C:/claude_code/FITME commit -m 'Phase 4-Step 1 완료: 부위별 FitScore 계산 — 같은 정의 쌍만 비교 + 신뢰도 전파 *)",
+      "Bash(git -C C:/claude_code/FITME log --oneline -3)",
+      "Bash(git -C C:/claude_code/FITME commit -m 'docs: 4-2 사이즈 추천 설계안 기록 — 하의 허리 처리 3안 사용자 결정 대기 \\(세션 무관 재개용\\) *)",
+      "Bash(git -C C:/claude_code/FITME log --oneline -2)"
     ]
   }
 }
