@@ -6,19 +6,21 @@ import PhotoPreview from './components/PhotoPreview';
 import MeasureResult from './components/MeasureResult';
 import ClothingUrlInput from './components/ClothingUrlInput';
 import ClothingSpecView from './components/ClothingSpecView';
+import FitResultView from './components/FitResultView';
 import { captureFramesFromVideo } from './lib/image';
 import type { CameraFacing } from './lib/camera';
 import type {
   AnalyzeResponse,
   CapturedImage,
   ClothingResponse,
+  FitResponse,
   MeasurementMode,
   UserProfile,
 } from './types';
 
 /**
  * 앱 화면 단계 — 모드 선택 → 신체 정보(2-8b) → 카메라 → 미리보기 →
- * 측정 결과(2-8e) → 의류 URL 입력(3-1) → 의류 정보(3-2~3-4에서 구현)
+ * 측정 결과(2-8e) → 의류 URL 입력(3-1) → 의류 정보(3-4b) → 핏 결과(4-4b)
  */
 type Screen =
   | 'mode-select'
@@ -27,7 +29,8 @@ type Screen =
   | 'preview'
   | 'result'
   | 'clothing-url'
-  | 'clothing-spec';
+  | 'clothing-spec'
+  | 'fit-result';
 
 function App() {
   const [screen, setScreen] = useState<Screen>('mode-select');
@@ -41,6 +44,8 @@ function App() {
   // 같은 URL의 의류 조회 결과 캐시 (3-4b) — 뒤로가기 재진입 시 재요청 없음.
   // URL이 바뀌면 무효화한다 (분석 캐시와 동일 패턴)
   const [clothing, setClothing] = useState<ClothingResponse | null>(null);
+  // 핏 결과 캐시 (4-4b) — 입력(측정·의류)이 바뀌면 무효화 (재요청 = AI 1회)
+  const [fit, setFit] = useState<FitResponse | null>(null);
   // 키(필수)·몸무게(선택) — 척도 캘리브레이션·BMI 보정 입력(2-7b).
   // 재촬영·뒤로가기 후에도 유지되도록 App이 보관 (Phase 1 배운 것 3번)
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -68,6 +73,7 @@ function App() {
       // 7프레임(전략 3) — 캡처 완료까지 카메라가 언마운트되지 않아야 한다
       setImage(await captureFramesFromVideo(video));
       setAnalysis(null); // 새 사진 → 이전 분석 캐시 무효화 (3-1)
+      setFit(null); // 측정이 바뀌므로 핏 캐시도 무효화 (4-4b)
       setScreen('preview');
     } catch (e) {
       alert(e instanceof Error ? e.message : String(e));
@@ -153,6 +159,7 @@ function App() {
         onSubmit={(url) => {
           if (url !== clothingUrl) {
             setClothing(null); // 새 URL → 이전 조회 캐시 무효화
+            setFit(null); // 의류가 바뀌므로 핏 캐시도 무효화 (4-4b)
           }
           setClothingUrl(url);
           setScreen('clothing-spec');
@@ -164,13 +171,38 @@ function App() {
 
   // 의류 정보 (3-4b) — /clothing 호출·로딩·실패 처리는 ClothingSpecView가 담당
   if (screen === 'clothing-spec' && clothingUrl !== null) {
+    const canFit = analysis?.ok === true && analysis.measurements != null;
     return (
       <ClothingSpecView
         url={clothingUrl}
         cached={clothing}
-        // ok=false는 캐시하지 않음 — 같은 URL 재진입 시 재조회로 복구 기회를 준다
-        onLoaded={(r) => setClothing(r.ok ? r : null)}
+        // ok=false는 캐시하지 않음 — 같은 URL 재진입 시 재조회로 복구 기회를 준다.
+        // 스펙이 새로 로드되면 이전 핏 결과도 입력이 달라진 것 → 무효화
+        onLoaded={(r) => {
+          setClothing(r.ok ? r : null);
+          setFit(null);
+        }}
         onEditUrl={() => setScreen('clothing-url')}
+        onRestart={() => setScreen('mode-select')}
+        onFit={canFit ? () => setScreen('fit-result') : null}
+      />
+    );
+  }
+
+  // 핏 결과 (4-4b) — /fit 호출·로딩·실패 처리는 FitResultView가 담당
+  if (
+    screen === 'fit-result' &&
+    analysis?.measurements != null &&
+    clothing?.spec != null
+  ) {
+    return (
+      <FitResultView
+        measurements={analysis.measurements}
+        spec={clothing.spec}
+        cached={fit}
+        // ok=false는 캐시하지 않음 — 재진입 시 재계산으로 복구 기회
+        onLoaded={(r) => setFit(r.ok ? r : null)}
+        onBack={() => setScreen('clothing-spec')}
         onRestart={() => setScreen('mode-select')}
       />
     );

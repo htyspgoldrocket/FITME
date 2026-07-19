@@ -804,3 +804,54 @@ body {
 .spec__needs-input {
   color: #fbbf24;
 }
+
+/* ===== 핏 결과 화면 (4-4b) ===== */
+
+.fit__recommend {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  background: #1f2937;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.fit__recommend-label {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.fit__recommend-size {
+  font-size: 2rem;
+  color: #34d399;
+}
+
+.fit__status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+}
+
+.fit__status--tight {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+
+.fit__status--good {
+  background: #064e3b;
+  color: #6ee7b7;
+}
+
+.fit__status--loose {
+  background: #1e3a8a;
+  color: #93c5fd;
+}
+
+.fit__recommendation {
+  background: #1f2937;
+  border-radius: 12px;
+  padding: 14px 16px;
+  line-height: 1.7;
+  font-size: 0.95rem;
+}

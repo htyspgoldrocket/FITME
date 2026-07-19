@@ -4,7 +4,7 @@
 // 각 Phase에서 실제 백엔드 호출로 교체한다:
 //   analyzeBody       → Phase 2-8 ✅ 교체 완료
 //   fetchClothingSpec → Phase 3-4 ✅ 교체 완료
-//   calculateFit      → Phase 4-4 (아직 stub)
+//   calculateFit      → Phase 4-4 ✅ 교체 완료 (Phase 1 stub 전부 소진)
 // ============================================================
 
 import type {
@@ -13,7 +13,7 @@ import type {
   CapturedImage,
   ClothingResponse,
   ClothingSpec,
-  FitResult,
+  FitResponse,
   MeasurementMode,
   PhotoCheckResult,
   UserProfile,
@@ -114,23 +114,31 @@ export async function fetchClothingSpec(
 }
 
 /**
- * [STUB] 핏 계산 — Phase 4에서 백엔드 `/fit` 호출로 교체.
+ * 핏 계산 (4-4b — stub에서 실제 연동으로 교체 완료. Phase 1 stub 전부 소진).
+ * POST /fit: 부위 비교(4-1) → 사이즈 추천(4-2, 하의 허리 A안) → 자연어
+ * 피드백(4-3, Claude API 1회 — 실패 시 서버가 템플릿 폴백하므로 요청은 성공).
+ *
+ * 추천 불가(비교 가능한 실측 없음)는 예외가 아니라 ok=false + error(한국어).
  */
-// TODO(Phase 4-4): 치수 비교 + 사이즈 추천 실제 연동으로 교체
 export async function calculateFit(
   measurements: BodyMeasurements,
   clothing: ClothingSpec,
-): Promise<FitResult> {
-  return {
-    measurements,
-    clothing,
-    recommendedSize: 'M',
-    scores: [
-      { part: 'chest', status: 'good', diff_cm: 1 },
-      { part: 'waist', status: 'good', diff_cm: 3 },
-      { part: 'hip', status: 'good', diff_cm: 2 },
-    ],
-    recommendation:
-      '[STUB] 더미 추천 문구입니다. Phase 4에서 실제 핏 분석으로 교체됩니다.',
-  };
+  timeoutMs = 60_000,
+): Promise<FitResponse> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/fit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ measurements, clothing }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`fit 실패: HTTP ${res.status}`);
+    }
+    return (await res.json()) as FitResponse;
+  } finally {
+    clearTimeout(timer);
+  }
 }

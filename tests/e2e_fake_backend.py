@@ -21,7 +21,9 @@ sys.path.insert(0, str(ROOT / "server"))
 
 import routes.analyze as analyze_route  # noqa: E402
 import routes.clothing as clothing_route  # noqa: E402
+import routes.fit as fit_route  # noqa: E402
 from services import clothing_store  # noqa: E402
+from services.fit_feedback import generate_feedback  # noqa: E402
 
 FAKE_LANDMARKS = {
     "head_top": [500.0, 100.0],
@@ -89,6 +91,13 @@ def _fake_scrape(url, timeout_ms=15000):
 
 
 clothing_route.scrape_musinsa = _fake_scrape
+
+
+# --- fit (4-4b): force the template path of the real feedback generator
+# (use_api=False) -- recommendation logic (4-1/4-2) runs for real, zero AI cost.
+fit_route.generate_feedback = (
+    lambda m, s, r: generate_feedback(m, s, r, use_api=False)
+)
 
 import tempfile  # noqa: E402
 

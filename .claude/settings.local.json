@@ -107,7 +107,11 @@
       "Bash(git -C C:/claude_code/FITME commit -m 'Phase 4-Step 3 완료: 자연어 핏 피드백 — 사실 전용 프롬프트 + 3중 모순 방어 + 템플릿 폴백 *)",
       "Bash(./venv/Scripts/python.exe -m pytest tests/test_fit_route.py -q)",
       "PowerShell(cd C:\\\\claude_code\\\\FITME\\\\server; Start-Process -FilePath \".\\\\venv\\\\Scripts\\\\uvicorn.exe\" -ArgumentList \"main:app --port 8000\" -WindowStyle Hidden; Start-Sleep -Seconds 4; \\(Invoke-RestMethod http://127.0.0.1:8000/health\\).phase)",
-      "Bash(git -C C:/claude_code/FITME commit -m 'Phase 4-Step 4a 완료: POST /fit 백엔드 — 4-1~4-3 배선 + FitRequest/FitResponse 계약 *)"
+      "Bash(git -C C:/claude_code/FITME commit -m 'Phase 4-Step 4a 완료: POST /fit 백엔드 — 4-1~4-3 배선 + FitRequest/FitResponse 계약 *)",
+      "PowerShell(Start-Sleep -Seconds 5; try { \\(Invoke-WebRequest http://localhost:5173 -UseBasicParsing\\).StatusCode } catch { \"not up\" }; cd C:\\\\claude_code\\\\FITME; node tests/e2e-fit.mjs)",
+      "PowerShell(cd C:\\\\claude_code\\\\FITME; node tests/e2e-clothing-spec.mjs; \"=== spec exit $LASTEXITCODE ===\"; node tests/e2e-clothing-url.mjs; \"=== url exit $LASTEXITCODE ===\")",
+      "PowerShell(cd C:\\\\claude_code\\\\FITME; node tests/e2e-analyze.mjs; \"=== analyze exit $LASTEXITCODE ===\")",
+      "Bash(git -C C:/claude_code/FITME commit -m 'Phase 4-Step 4b 완료: calculateFit 실연동 + 핏 결과 화면 — Phase 1 stub 전부 소진, Phase 4 개발 완료 *)"
     ]
   }
 }

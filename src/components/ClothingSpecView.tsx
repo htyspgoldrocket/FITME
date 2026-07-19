@@ -9,6 +9,8 @@ interface ClothingSpecViewProps {
   onLoaded: (response: ClothingResponse) => void;
   onEditUrl: () => void;
   onRestart: () => void;
+  /** 핏 분석(4-4)으로 진행 — 측정 결과가 있을 때만 App이 전달 */
+  onFit: (() => void) | null;
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -43,6 +45,7 @@ function ClothingSpecView({
   onLoaded,
   onEditUrl,
   onRestart,
+  onFit,
 }: ClothingSpecViewProps) {
   const [state, setState] = useState<State>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0); // "다시 시도" 시 증가 → 재호출
@@ -209,7 +212,15 @@ function ClothingSpecView({
         <button type="button" className="result__btn" onClick={onRestart}>
           처음으로
         </button>
-        {/* 핏 분석(Phase 4)으로 진행하는 버튼은 4-4에서 추가 — 규칙 4 (stub 유지) */}
+        {onFit && (
+          <button
+            type="button"
+            className="result__btn result__btn--primary"
+            onClick={onFit}
+          >
+            핏 분석 보기
+          </button>
+        )}
       </div>
     </div>
   );
