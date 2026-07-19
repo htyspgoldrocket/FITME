@@ -111,7 +111,10 @@
       "PowerShell(Start-Sleep -Seconds 5; try { \\(Invoke-WebRequest http://localhost:5173 -UseBasicParsing\\).StatusCode } catch { \"not up\" }; cd C:\\\\claude_code\\\\FITME; node tests/e2e-fit.mjs)",
       "PowerShell(cd C:\\\\claude_code\\\\FITME; node tests/e2e-clothing-spec.mjs; \"=== spec exit $LASTEXITCODE ===\"; node tests/e2e-clothing-url.mjs; \"=== url exit $LASTEXITCODE ===\")",
       "PowerShell(cd C:\\\\claude_code\\\\FITME; node tests/e2e-analyze.mjs; \"=== analyze exit $LASTEXITCODE ===\")",
-      "Bash(git -C C:/claude_code/FITME commit -m 'Phase 4-Step 4b 완료: calculateFit 실연동 + 핏 결과 화면 — Phase 1 stub 전부 소진, Phase 4 개발 완료 *)"
+      "Bash(git -C C:/claude_code/FITME commit -m 'Phase 4-Step 4b 완료: calculateFit 실연동 + 핏 결과 화면 — Phase 1 stub 전부 소진, Phase 4 개발 완료 *)",
+      "Bash(git -C C:/claude_code/FITME fetch origin)",
+      "Bash(git -C C:/claude_code/FITME log --oneline origin/main -1)",
+      "Bash(git -C C:/claude_code/FITME commit -m 'docs: 로컬 권한 설정 보존 \\(Phase 4 개발 세션 허용 목록\\) *)"
     ]
   }
 }
