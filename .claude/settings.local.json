@@ -122,7 +122,8 @@
       "Bash(git -C C:/claude_code/FITME commit -m 'Phase 4 교정: 밴딩 하의 엉덩이 이상 여유 상향 — 트랙팬츠 실착 L 일치. 수동 검증 최종 2/3 *)",
       "Bash(git -C C:/claude_code/FITME commit -m 'docs: Phase 4 Gate 리포트 정식 기록 \\(수동 2/3 — 조건부 승인 대기\\) + 권한 설정 보존 *)",
       "Bash(git -C C:/claude_code/FITME tag phase-4-complete)",
-      "Bash(git -C C:/claude_code/FITME commit -m 'docs: Phase 4 Gate 조건부 통과 확정 \\(사용자 승인\\) + phase-4-complete 태그 *)"
+      "Bash(git -C C:/claude_code/FITME commit -m 'docs: Phase 4 Gate 조건부 통과 확정 \\(사용자 승인\\) + phase-4-complete 태그 *)",
+      "Bash(git -C C:/claude_code/FITME commit -m 'docs: 5-1 재개 절차 기록 — 모델 cuuupid/idm-vton 확정, API 키 준비 대기 *)"
     ]
   }
 }
