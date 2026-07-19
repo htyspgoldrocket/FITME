@@ -87,6 +87,10 @@ ELASTIC_WAIST_KEYWORDS = [
 # 오버핏 감지 시 이상 여유 상향 (검증 근거: 오버핏 티셔츠 실착 L — M(+16)/L(+18)
 # 중 L이 맞으려면 chest 이상 여유 ≥ +19 필요. 표본 1벌 역산 수준의 추정)
 OVERSIZED_IDEAL_BONUS = {"chest": 8.0, "shoulder": 5.0, "waist": 6.0, "hip": 6.0}
+# 밴딩 하의(트랙팬츠·조거류)는 스포티/릴렉스 핏 — 엉덩이도 넉넉하게 입는 게
+# 정상이라 이상 여유 상향 (검증 근거: 트랙팬츠 실착 L(hip +12) 역산 → 이상
+# 여유 ≈ +13 = 기본 8 + 5. 표본 1벌 역산 수준의 추정)
+ELASTIC_HIP_IDEAL_BONUS = 5.0
 
 
 def detect_garment_traits(spec) -> dict[str, bool]:
@@ -152,6 +156,7 @@ def recommend_size(measurements: BodyMeasurements, spec) -> Recommendation:
     excluded: set[str] = set()
     if traits["elastic_waist"]:
         excluded.add("waist")
+        ideal["hip"] = ideal["hip"] + ELASTIC_HIP_IDEAL_BONUS
         warnings.append(
             "허리가 밴딩(고무줄)으로 보여 표기 실측 비교에서 제외했어요 — "
             "밴딩 하의는 추천 정확도가 낮을 수 있어요"

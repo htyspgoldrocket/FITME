@@ -322,3 +322,18 @@ def test_elastic_keyword_ignored_for_top():
     spec.productName = "스웨트 셔츠"
     rec = recommend_size(make_body(), spec)
     assert not any("밴딩" in w for w in rec["warnings"])
+
+
+def test_elastic_bottom_hip_ideal_raised_to_L():
+    """트랙팬츠 실데이터(4414673) — 실착 L (밴딩 하의 엉덩이 이상 여유 역산 근거)."""
+    spec = make_spec([
+        ClothingSize(label="S", waist_cm=68.0, hip_cm=106.0),
+        ClothingSize(label="M", waist_cm=72.0, hip_cm=110.0),
+        ClothingSize(label="L", waist_cm=74.0, hip_cm=112.0),
+        ClothingSize(label="XL", waist_cm=80.0, hip_cm=118.0),
+        ClothingSize(label="2XL", waist_cm=84.0, hip_cm=128.0),
+    ], category="bottom")
+    spec.productName = "유벤투스 트랙 팬츠 - 네이비"
+    rec = recommend_size(make_body(), spec)
+    assert rec["recommendedSize"] == "L"
+    assert rec["insufficient"] is False
