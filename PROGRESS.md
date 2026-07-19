@@ -215,9 +215,22 @@
     티셔츠 M(1.35) / 아크테릭스 M(0.0) / 배럴 데님 XL+insufficient+경고.
     ⚠️ 미결(4-3·수동 검증으로 이월): 하의 허리 A안의 실제 체감 적합성은
     Phase 4 수동 검증(아는 바지 대조)이 판정
-- **다음 시작 지점: 4-3 — Claude API 자연어 핏 피드백** (FitScore·추천·경고
-  → 수치와 모순 없는 한국어 추천문. insufficient·신뢰도 low·estimated
-  문구 반영. JSON 방어는 2-5 패턴 재사용)
+  - **4-3 ✅ 완료 (2026-07-19)**: 자연어 핏 피드백 — `services/fit_feedback.py`
+    신규. `generate_feedback()`: 계산된 사실만 JSON으로 프롬프트에 전달
+    (지어내기 금지 명시) → {"recommendation": …} 회수. **수치 모순 방어 3중**:
+    ① 사실 전용 프롬프트 ② JSON 방어(2-5 패턴: 코드펜스 제거→{} 추출→
+    1회만 재요청) ③ 추천 라벨 미포함 응답 거부. 실패·API 오류 시 **사실
+    기반 템플릿 폴백**(같은 facts에서 기계 조립 — 가짜 정보 아님,
+    source="claude"/"template"로 경로 구분). 추천 불가(None)면 API 미호출
+    (비용 0). 모델 claude-opus-4-8 (FITME_FEEDBACK_MODEL 교체 가능).
+    검증: pytest 12건 신규(facts 추출·템플릿 문구·코드펜스·재요청 1회 제한·
+    라벨 검증·예외 폴백·API 미호출 경로 — 전부 mock, API 0회) 전체 126/126.
+    **실호출 2회**(아우터 M 정상 / 데님 XL insufficient): 둘 다 source=claude,
+    생성문이 부위별 판정·cm·신뢰도 low·A안 경고와 전부 일치 (모순 0건)
+- **다음 시작 지점: 4-4 — `calculateFit` stub→실제 + 핏 결과 화면**
+  (백엔드 `routes/fit.py` POST /fit: score_parts+recommend_size+
+  generate_feedback 배선 → FitResult 조립 + 프론트 마지막 stub 교체 +
+  핏 결과 화면 + E2E → 완료 시 Phase 4 Gate 검증)
 - (아래는 4-2 설계 기록 — 구현 완료됐으나 근거 추적용 보존)
   설계안 요지 (2026-07-18 제시 — 세션 무관 재개용 기록):
   - **알고리즘 2단계**: ① 하한 필터 — 비교 부위 중 tight가 있는 사이즈는

@@ -101,7 +101,10 @@
       "Bash(git -C C:/claude_code/FITME log --oneline -2)",
       "Bash(./venv/Scripts/python.exe -m pytest tests/test_fit.py -q)",
       "Bash(./venv/Scripts/python.exe \"C:/Users/htysp/AppData/Local/Temp/claude/C--claude-code-FITME/482887b4-8f08-4795-81cc-281b09766564/scratchpad/verify_fit_42.py\")",
-      "Bash(git -C C:/claude_code/FITME commit -m 'Phase 4-Step 2 완료: 사이즈 추천 recommend_size — 2단계\\(필터→이상 여유 근접\\) + 하의 허리 A안 *)"
+      "Bash(git -C C:/claude_code/FITME commit -m 'Phase 4-Step 2 완료: 사이즈 추천 recommend_size — 2단계\\(필터→이상 여유 근접\\) + 하의 허리 A안 *)",
+      "Bash(./venv/Scripts/python.exe -m pytest tests/test_fit_feedback.py -q)",
+      "Bash(./venv/Scripts/python.exe \"C:/Users/htysp/AppData/Local/Temp/claude/C--claude-code-FITME/482887b4-8f08-4795-81cc-281b09766564/scratchpad/verify_fit_43.py\")",
+      "Bash(git -C C:/claude_code/FITME commit -m 'Phase 4-Step 3 완료: 자연어 핏 피드백 — 사실 전용 프롬프트 + 3중 모순 방어 + 템플릿 폴백 *)"
     ]
   }
 }
