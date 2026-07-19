@@ -114,7 +114,8 @@
       "Bash(git -C C:/claude_code/FITME commit -m 'Phase 4-Step 4b 완료: calculateFit 실연동 + 핏 결과 화면 — Phase 1 stub 전부 소진, Phase 4 개발 완료 *)",
       "Bash(git -C C:/claude_code/FITME fetch origin)",
       "Bash(git -C C:/claude_code/FITME log --oneline origin/main -1)",
-      "Bash(git -C C:/claude_code/FITME commit -m 'docs: 로컬 권한 설정 보존 \\(Phase 4 개발 세션 허용 목록\\) *)"
+      "Bash(git -C C:/claude_code/FITME commit -m 'docs: 로컬 권한 설정 보존 \\(Phase 4 개발 세션 허용 목록\\) *)",
+      "Bash(git -C C:/claude_code/FITME commit -m 'docs: Phase 4 수동 검증 1차 미통과 기록 — 불일치 2건 원인 분석 \\(핏 유형·신축 미반영, 실측 미제공 상품\\) *)"
     ]
   }
 }
