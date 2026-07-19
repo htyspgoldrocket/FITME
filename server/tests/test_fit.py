@@ -269,3 +269,56 @@ def test_bottom_category_is_hip_weighted():
         ClothingSize(label="L", waist_cm=104.0, hip_cm=114.0),  # hip +14
     ], category="bottom")
     assert recommend_size(make_body(), spec)["recommendedSize"] == "M"
+
+# ============================================================
+# 4-2 교정 — 핏 유형·신축 허리 감지 (Phase 4 수동 검증 1차 반영)
+# ============================================================
+
+# 오버핏 티셔츠 실데이터(4219389) — 실착 L (검증 근거)
+TEE_SIZES = [
+    ClothingSize(label="M", chest_cm=116.0, shoulder_cm=54.0),
+    ClothingSize(label="L", chest_cm=118.0, shoulder_cm=56.0),
+    ClothingSize(label="XL", chest_cm=124.0, shoulder_cm=58.0),
+]
+
+
+def test_oversized_keyword_raises_ideal_to_L():
+    """상품명 '오버핏' → 이상 여유 상향 → 실착과 같은 L 추천."""
+    spec = make_spec(TEE_SIZES)
+    spec.productName = "헤비듀티 피그먼트 오버핏 반팔 티셔츠"
+    rec = recommend_size(make_body(), spec)
+    assert rec["recommendedSize"] == "L"
+    assert any("오버핏" in w for w in rec["warnings"])
+
+
+def test_regular_name_keeps_regular_ideal():
+    """같은 치수라도 오버핏 키워드가 없으면 기존 기준(M) 유지."""
+    spec = make_spec(TEE_SIZES)
+    spec.productName = "베이식 반팔 티셔츠"
+    rec = recommend_size(make_body(), spec)
+    assert rec["recommendedSize"] == "M"
+    assert not any("오버핏" in w for w in rec["warnings"])
+
+
+def test_elastic_waist_excluded_from_comparison():
+    """'트랙 팬츠' → 허리를 비교에서 제외 — insufficient 아님, hip 기준 추천."""
+    spec = make_spec([
+        ClothingSize(label="S", waist_cm=68.0, hip_cm=106.0),
+        ClothingSize(label="M", waist_cm=72.0, hip_cm=110.0),
+        ClothingSize(label="2XL", waist_cm=84.0, hip_cm=128.0),
+    ], category="bottom")
+    spec.productName = "유벤투스 트랙 팬츠 - 네이비"
+    rec = recommend_size(make_body(), spec)
+    assert rec["insufficient"] is False          # 교정 전엔 True(2XL)였음
+    assert rec["recommendedSize"] in ("S", "M")  # hip 기준 (동점 시 S)
+    assert any("밴딩" in w for w in rec["warnings"])
+    for p in rec["perSize"]:
+        assert all(s.part != "waist" for s in p["scores"])  # 허리 표시도 제외
+
+
+def test_elastic_keyword_ignored_for_top():
+    """신축 허리 감지는 하의 전용 — 상의 이름에 키워드가 있어도 무시."""
+    spec = make_spec([ClothingSize(label="M", chest_cm=111.0)])
+    spec.productName = "스웨트 셔츠"
+    rec = recommend_size(make_body(), spec)
+    assert not any("밴딩" in w for w in rec["warnings"])

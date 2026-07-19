@@ -136,3 +136,27 @@ def test_parse_sizes_empty_raises():
 def test_parse_sizes_all_invalid_raises():
     with pytest.raises(ClothingScrapeError):
         parse_sizes({"sizes": [{"name": "F", "items": [{"name": "x", "value": None}]}]})
+
+# ---------- 4-4 교정: actual-size SUCCESS + data:null = 실측 미제공 상품 ----------
+
+def test_extract_size_data_null_is_no_size():
+    """노스페이스 6113011 실증 케이스 — 정확한 안내로 구분."""
+    from services.clothing_scrape import ClothingScrapeError, extract_size_data
+    payload = {"meta": {"result": "SUCCESS"}, "data": None}
+    with pytest.raises(ClothingScrapeError) as e:
+        extract_size_data(payload)
+    assert e.value.code == "no-size"
+    assert "실측 사이즈 미제공" in str(e.value)
+
+
+def test_extract_size_data_success_passthrough():
+    from services.clothing_scrape import extract_size_data
+    payload = {"meta": {"result": "SUCCESS"}, "data": {"sizes": []}}
+    assert extract_size_data(payload) == {"sizes": []}
+
+
+def test_extract_size_data_fail_meta_is_not_found():
+    from services.clothing_scrape import ClothingScrapeError, extract_size_data
+    with pytest.raises(ClothingScrapeError) as e:
+        extract_size_data({"meta": {"result": "FAIL"}, "data": None})
+    assert e.value.code == "not-found"

@@ -83,6 +83,23 @@ def parse_goods(data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def extract_size_data(payload: dict[str, Any]) -> dict[str, Any]:
+    """actual-size 응답 봉투 검사 (순수 함수 — 테스트 대상).
+
+    SUCCESS + data:null은 "무신사에 실측이 등록되지 않은 상품"이다 (2026-07-19
+    노스페이스 6113011 실증 — 상품은 존재하나 브랜드가 실측 미제공). 이 경우
+    "주소 확인" 안내는 부정확하므로 no-size로 구분해 정확히 안내한다.
+    """
+    meta = payload.get("meta") or {}
+    if meta.get("result") == "SUCCESS" and payload.get("data") is None:
+        raise ClothingScrapeError(
+            "no-size",
+            "이 상품은 실측 사이즈 미제공이에요(브랜드가 무신사에 실측을 등록하지 "
+            "않음) — 실측 사이즈표가 있는 상품만 핏 비교가 가능해요",
+        )
+    return _check_meta(payload, "사이즈")
+
+
 def parse_sizes(data: dict[str, Any]) -> dict[str, Any]:
     """실측 사이즈 API data → 사이즈별 {부위명: cm} (순수 함수 — 테스트 대상).
 
@@ -148,7 +165,7 @@ def scrape_musinsa(url: str, timeout_ms: int = 15000) -> dict[str, Any]:
                         "no-size",
                         f"사이즈 정보를 가져오지 못했어요 (HTTP {size_res.status})",
                     )
-                size_info = parse_sizes(_check_meta(size_res.json(), "사이즈"))
+                size_info = parse_sizes(extract_size_data(size_res.json()))
             finally:
                 browser.close()
     except PlaywrightError as e:

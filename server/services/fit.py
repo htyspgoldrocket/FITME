@@ -72,6 +72,34 @@ def score_parts(measurements: BodyMeasurements, size: ClothingSize) -> list[FitS
 # 부위별 "이상적 여유" = EASE_RANGES(good 구간)의 중앙값 — 별도 추정을 더하지 않음
 IDEAL_EASE: dict[str, float] = {p: (lo + hi) / 2 for p, (lo, hi) in EASE_RANGES.items()}
 
+# ---- 의류 특성 감지 (Phase 4 수동 검증 1차 불일치 교정, 2026-07-19) ----
+# 무신사가 핏 유형·신축성 필드를 주지 않으므로 상품명 키워드로 감지한다.
+# ⚠️ 키워드 목록·보정량 전부 추정값. 방침(사용자 결정 2026-07-19): 지금은 앱
+# 완성 우선 — 다수 실측 데이터가 확보되면 그때 검증·정교화한다. 완벽 목표 아님.
+OVERSIZED_KEYWORDS = [
+    "오버핏", "오버 핏", "오버사이즈", "루즈", "릴렉스", "와이드",
+    "OVERSIZE", "OVER FIT", "LOOSE", "RELAXED",
+]
+ELASTIC_WAIST_KEYWORDS = [
+    "트랙팬츠", "트랙 팬츠", "조거", "스웨트", "츄리닝", "밴딩", "이지팬츠",
+    "이지 팬츠", "JOGGER", "TRACK PANT", "SWEAT",
+]
+# 오버핏 감지 시 이상 여유 상향 (검증 근거: 오버핏 티셔츠 실착 L — M(+16)/L(+18)
+# 중 L이 맞으려면 chest 이상 여유 ≥ +19 필요. 표본 1벌 역산 수준의 추정)
+OVERSIZED_IDEAL_BONUS = {"chest": 8.0, "shoulder": 5.0, "waist": 6.0, "hip": 6.0}
+
+
+def detect_garment_traits(spec) -> dict[str, bool]:
+    """상품명 키워드 → {oversized, elastic_waist}. 감지 실패는 보정 없음(안전)."""
+    name = (spec.productName or "").upper()
+    return {
+        "oversized": any(k.upper() in name for k in OVERSIZED_KEYWORDS),
+        # 신축 허리는 하의에서만 의미 (트랙팬츠·조거의 고무줄 밴드 —
+        # 이완 상태 실측이 몸 허리보다 작은 것이 정상이라 직접 비교가 무의미)
+        "elastic_waist": spec.category == "bottom"
+        and any(k.upper() in name for k in ELASTIC_WAIST_KEYWORDS),
+    }
+
 # 카테고리별 부위 가중치. ⚠️ 추정값 — 사이즈 선택에서 부위가 갖는 통상적 중요도
 # 기준이며 실측 근거 없음. Phase 4 수동 검증(아는 옷 대조)에서 교정한다.
 # 목록에 없는 부위가 잡히면 참고 수준(0.1)로만 반영.
@@ -114,14 +142,29 @@ def recommend_size(measurements: BodyMeasurements, spec) -> Recommendation:
     """
     relax = STRETCH_RELAX_CM.get(spec.stretch or "none", 0.0)
     weights = PART_WEIGHTS.get(spec.category, PART_WEIGHTS["top"])
+    traits = detect_garment_traits(spec)
+    ideal = dict(IDEAL_EASE)
     warnings: list[str] = []
+    if traits["oversized"]:
+        for part, bonus in OVERSIZED_IDEAL_BONUS.items():
+            ideal[part] = ideal[part] + bonus
+        warnings.append("오버핏 상품으로 보여 여유 기준을 높여 추천했어요")
+    excluded: set[str] = set()
+    if traits["elastic_waist"]:
+        excluded.add("waist")
+        warnings.append(
+            "허리가 밴딩(고무줄)으로 보여 표기 실측 비교에서 제외했어요 — "
+            "밴딩 하의는 추천 정확도가 낮을 수 있어요"
+        )
     per_size: list[SizeFit] = []
     # (정렬 키, 목록 순번, label) — 순번 포함으로 동점 시 작은 사이즈 우선
     candidates: list[tuple[float, int, str]] = []
     fallbacks: list[tuple[float, float, int, str]] = []
 
     for i, size in enumerate(spec.sizes):
-        scores = score_parts(measurements, size)
+        scores = [
+            s for s in score_parts(measurements, size) if s.part not in excluded
+        ]
         if not scores:
             per_size.append(SizeFit(label=size.label, scores=[], candidate=False,
                                     penalty=None, violation=None))
@@ -130,7 +173,7 @@ def recommend_size(measurements: BodyMeasurements, spec) -> Recommendation:
         violation = 0.0
         for s in scores:
             w = weights.get(s.part, DEFAULT_WEIGHT)
-            penalty += w * abs(s.diff_cm - IDEAL_EASE[s.part])
+            penalty += w * abs(s.diff_cm - ideal[s.part])
             lo = EASE_RANGES[s.part][0]
             if s.part in CIRCUMFERENCE_PARTS:
                 lo -= relax
