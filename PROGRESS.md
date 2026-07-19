@@ -227,10 +227,19 @@
     라벨 검증·예외 폴백·API 미호출 경로 — 전부 mock, API 0회) 전체 126/126.
     **실호출 2회**(아우터 M 정상 / 데님 XL insufficient): 둘 다 source=claude,
     생성문이 부위별 판정·cm·신뢰도 low·A안 경고와 전부 일치 (모순 0건)
-- **다음 시작 지점: 4-4 — `calculateFit` stub→실제 + 핏 결과 화면**
-  (백엔드 `routes/fit.py` POST /fit: score_parts+recommend_size+
-  generate_feedback 배선 → FitResult 조립 + 프론트 마지막 stub 교체 +
-  핏 결과 화면 + E2E → 완료 시 Phase 4 Gate 검증)
+  - **4-4a ✅ 완료 (2026-07-19)**: 백엔드 POST /fit — `routes/fit.py`
+    (def 엔드포인트 — 피드백이 동기 HTTP): recommend_size(4-2 A안) →
+    추천 사이즈 FitScore(4-1) → generate_feedback(4-3, 폴백 내장이라 요청은
+    실패하지 않음) → FitResult 조립. **신규 계약 FitRequest/FitResponse**
+    (ok/result?/warnings/error? — 추천 불가를 가짜 사이즈 없이 전달,
+    CLAUDE.md 6장→types→schemas 동기화). 검증: pytest 5건 신규(FitResult
+    산출·신뢰도 low 반영(Gate 항목)·insufficient 경고 전달·추천 불가
+    ok=false·422 — feedback mock, API 0회) 전체 131/131 + tsc,
+    실서버 통짜 1회(실측+무신사 아우터 → M, 추천문 수치 일치, API 1회)
+- **다음 시작 지점: 4-4b — 프론트** (`calculateFit` stub→실제 POST /fit
+  (FitResponse) + 핏 결과 화면(추천 사이즈·부위별 FitScore 표·신뢰도 배지·
+  경고·추천문) + 의류 스펙 화면에서 진행 버튼 연결 + E2E
+  → 완료 시 Step 4-4·Phase 4 개발 완료, Phase 4 Gate 검증으로)
 - (아래는 4-2 설계 기록 — 구현 완료됐으나 근거 추적용 보존)
   설계안 요지 (2026-07-18 제시 — 세션 무관 재개용 기록):
   - **알고리즘 2단계**: ① 하한 필터 — 비교 부위 중 tight가 있는 사이즈는

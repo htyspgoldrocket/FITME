@@ -127,7 +127,15 @@ export interface FitResult {
   measurements: BodyMeasurements;
   clothing: ClothingSpec;
   recommendedSize: string;
-  scores: FitScore[];
+  scores: FitScore[];          // 추천 사이즈의 부위별 판정
   recommendation: string;      // 자연어 추천 (한국어)
   imageUrl?: string;           // Phase 5 합성 이미지
+}
+
+// ===== /fit 응답 (Phase 4-4 — 추천 불가를 가짜 사이즈 없이 전달) =====
+export interface FitResponse {
+  ok: boolean;
+  result?: FitResult;   // ok=true일 때만 존재
+  warnings: string[];   // insufficient(A안)·estimated·신뢰도 등 경고 (한국어)
+  error?: string;       // ok=false 사유 (한국어 — 예: 비교 가능한 부위 실측 없음)
 }

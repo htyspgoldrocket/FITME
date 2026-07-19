@@ -92,9 +92,22 @@ class FitResult(BaseModel):
     measurements: BodyMeasurements
     clothing: ClothingSpec
     recommendedSize: str
-    scores: list[FitScore]
+    scores: list[FitScore]       # 추천 사이즈의 부위별 판정
     recommendation: str          # 자연어 추천 (한국어)
     imageUrl: Optional[str] = None  # Phase 5 합성 이미지
+
+
+# ===== /fit 요청·응답 (Phase 4-4 — 추천 불가를 가짜 사이즈 없이 전달) =====
+class FitRequest(BaseModel):
+    measurements: BodyMeasurements
+    clothing: ClothingSpec
+
+
+class FitResponse(BaseModel):
+    ok: bool
+    result: Optional[FitResult] = None  # ok=True일 때만 존재
+    warnings: list[str] = []            # insufficient(A안)·estimated 등 경고 (한국어)
+    error: Optional[str] = None         # ok=False 사유 (한국어)
 
 
 # ===== 촬영 품질 판정 (촬영 가이드 층위 3 — 2-7c 산출물) =====
