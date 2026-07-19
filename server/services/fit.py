@@ -63,3 +63,109 @@ def score_parts(measurements: BodyMeasurements, size: ClothingSize) -> list[FitS
             )
         )
     return scores
+
+
+# ============================================================
+# 4-2 — 사이즈 추천 (설계 2026-07-18, 하의 허리는 A안 — 사용자 확정 2026-07-19)
+# ============================================================
+
+# 부위별 "이상적 여유" = EASE_RANGES(good 구간)의 중앙값 — 별도 추정을 더하지 않음
+IDEAL_EASE: dict[str, float] = {p: (lo + hi) / 2 for p, (lo, hi) in EASE_RANGES.items()}
+
+# 카테고리별 부위 가중치. ⚠️ 추정값 — 사이즈 선택에서 부위가 갖는 통상적 중요도
+# 기준이며 실측 근거 없음. Phase 4 수동 검증(아는 옷 대조)에서 교정한다.
+# 목록에 없는 부위가 잡히면 참고 수준(0.1)로만 반영.
+PART_WEIGHTS: dict[str, dict[str, float]] = {
+    "top": {"chest": 0.6, "shoulder": 0.3, "waist": 0.1},
+    "outer": {"chest": 0.6, "shoulder": 0.3, "waist": 0.1},
+    "bottom": {"hip": 0.6, "waist": 0.3},
+    "dress": {"chest": 0.5, "waist": 0.25, "hip": 0.25},
+}
+DEFAULT_WEIGHT = 0.1
+
+# 신축성에 따른 필터 하한 완화 (둘레 부위만 — 직물이 늘어나는 방향). ⚠️ 추정값.
+# 무신사는 신축성 미제공 → stretch 없으면 완화 0 (안전 기본값).
+# 완화는 추천 필터에만 적용 — FitScore.status는 4-1 원 기준 유지 (표시 일관성).
+STRETCH_RELAX_CM: dict[str, float] = {"none": 0.0, "low": 2.0, "high": 4.0}
+CIRCUMFERENCE_PARTS = {"chest", "waist", "hip"}
+
+
+class SizeFit(dict):
+    """사이즈별 상세 (per_size 항목) — label/scores/candidate/penalty/violation."""
+
+
+class Recommendation(dict):
+    """recommend_size 반환 — recommendedSize(str|None)/insufficient/warnings/perSize.
+
+    dict 기반(추가 계약 불필요) — FitResult 조립·API 배선은 4-4의 몫.
+    """
+
+
+def recommend_size(measurements: BodyMeasurements, spec) -> Recommendation:
+    """ClothingSpec의 사이즈 목록에서 추천 사이즈 산출 (설계: 2단계).
+
+    ① 하한 필터 — 비교 부위 중 (신축성 완화 후에도) 하한 미달인 사이즈는
+       후보 탈락. loose는 탈락 사유가 아님 (관찰 1 — 드롭숄더 옷 배제 방지)
+    ② 후보 중 이상 여유(IDEAL_EASE)에 가중 거리 최소인 사이즈 추천.
+       동점이면 작은(목록 앞) 사이즈
+    A안 (관찰 2): 후보가 0이면 가중 부족량(violation)이 최소인 사이즈를
+       추천하되 insufficient=True + 한국어 경고 — 근거 없는 보정 없이
+       불확실성을 드러낸다 (규칙 1)
+    """
+    relax = STRETCH_RELAX_CM.get(spec.stretch or "none", 0.0)
+    weights = PART_WEIGHTS.get(spec.category, PART_WEIGHTS["top"])
+    warnings: list[str] = []
+    per_size: list[SizeFit] = []
+    # (정렬 키, 목록 순번, label) — 순번 포함으로 동점 시 작은 사이즈 우선
+    candidates: list[tuple[float, int, str]] = []
+    fallbacks: list[tuple[float, float, int, str]] = []
+
+    for i, size in enumerate(spec.sizes):
+        scores = score_parts(measurements, size)
+        if not scores:
+            per_size.append(SizeFit(label=size.label, scores=[], candidate=False,
+                                    penalty=None, violation=None))
+            continue  # 비교 가능한 부위가 없는 사이즈 — 추천 근거 없음 (규칙 1)
+        penalty = 0.0
+        violation = 0.0
+        for s in scores:
+            w = weights.get(s.part, DEFAULT_WEIGHT)
+            penalty += w * abs(s.diff_cm - IDEAL_EASE[s.part])
+            lo = EASE_RANGES[s.part][0]
+            if s.part in CIRCUMFERENCE_PARTS:
+                lo -= relax
+            if s.diff_cm < lo:
+                violation += w * (lo - s.diff_cm)
+        is_candidate = violation == 0.0
+        per_size.append(SizeFit(label=size.label, scores=scores, candidate=is_candidate,
+                                penalty=round(penalty, 2), violation=round(violation, 2)))
+        if is_candidate:
+            candidates.append((penalty, i, size.label))
+        else:
+            fallbacks.append((violation, penalty, i, size.label))
+
+    insufficient = False
+    if candidates:
+        _, idx, label = min(candidates)
+    elif fallbacks:
+        # A안 — 전 사이즈가 하한 미달: 가장 덜 부족한 사이즈 + 경고
+        _, _, idx, label = min(fallbacks)
+        insufficient = True
+        tight_parts = [s.part for s in per_size[idx]["scores"] if s.status == "tight"]
+        part_ko = {"chest": "가슴", "waist": "허리", "hip": "엉덩이", "shoulder": "어깨"}
+        names = "·".join(part_ko.get(p, p) for p in tight_parts)
+        warnings.append(
+            f"모든 사이즈가 {names} 기준으로 작을 수 있어요 — 가장 여유 있는 "
+            f"'{label}'을(를) 추천하지만, 해당 부위 실측 확인을 권장해요"
+        )
+    else:
+        warnings.append("사이즈표에 비교 가능한 부위 실측이 없어 사이즈 추천이 어려워요")
+        return Recommendation(recommendedSize=None, insufficient=False,
+                              warnings=warnings, perSize=per_size)
+
+    if getattr(spec.sizes[idx], "estimated", None):
+        warnings.append(
+            f"추천 사이즈 '{label}'의 치수는 실측이 아닌 호칭 기반 근사예요"
+        )
+    return Recommendation(recommendedSize=label, insufficient=insufficient,
+                          warnings=warnings, perSize=per_size)
