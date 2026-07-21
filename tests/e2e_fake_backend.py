@@ -57,6 +57,34 @@ def _fake_extract(image_base64, width, height, mime_type="image/jpeg"):
 analyze_route.extract_body_landmarks = _fake_extract
 
 
+# FITME_E2E_NOBODY=1: every frame's landmark extraction fails -> /analyze
+# returns ok:false with the reference still detected for real (tests the B-4
+# failure view WITH the green detection overlay + body-stage causes).
+if os.environ.get("FITME_E2E_NOBODY") == "1":
+    def _fail_extract(image_base64, width, height, mime_type="image/jpeg"):
+        raise ValueError("E2E: forced landmark failure")
+
+    analyze_route.extract_body_landmarks = _fail_extract
+
+
+# FITME_E2E_NODETECT=1: reference detection misses -> /analyze returns
+# ok:false, detected:false (B-4 failure view WITHOUT overlay + reference-stage
+# causes). Only /analyze is patched -- /check-photo keeps the real detector,
+# so the layer-3 auto-shoot still fires during the E2E run.
+if os.environ.get("FITME_E2E_NODETECT") == "1":
+    def _miss_detect(image):
+        return {
+            "type": "aruco",
+            "realWidthMm": 70.0,
+            "realHeightMm": 70.0,
+            "detected": False,
+            "cornersPx": None,
+        }
+
+    analyze_route.detect_aruco = _miss_detect
+    analyze_route.detect_card = _miss_detect
+
+
 # --- clothing (3-4b): replace only the Musinsa scrape -- normalization (3-3),
 # route logic and the SQLite cache (3-4a) all run for real, offline.
 # Cache DB goes to a per-process temp file so the real DB is never touched

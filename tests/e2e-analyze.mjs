@@ -162,6 +162,52 @@ try {
   await page.waitForSelector('.result__retake', { timeout: 30000 });
   const asymText = await page.$eval('.result__retake', (el) => el.textContent);
   check('비대칭 랜드마크 → 재촬영 권고에 비대칭 사유 표시', asymText.includes('비대칭'));
+
+  // B-4 ① — 기준물은 검출됐지만 신체 인식 실패: 사진 + 초록 검출 테두리 +
+  // 신체 단계 원인 체크리스트 (5-4 백로그 — 실패 시각화)
+  backend.kill();
+  check('비대칭 백엔드 종료 대기', await waitBackend(false));
+  backend = spawn(
+    PYTHON,
+    ['-m', 'uvicorn', 'tests.e2e_fake_backend:app', '--port', '8000'],
+    { cwd: ROOT, stdio: 'ignore', env: { ...process.env, FITME_E2E_NOBODY: '1' } },
+  );
+  check('신체 인식 실패 백엔드 기동', await waitBackend(true));
+  await page.click('.result__actions .result__btn:not(.result__btn--primary)');
+  await page.waitForSelector('.camera', { timeout: 10000 });
+  await page.waitForSelector('.preview', { timeout: 30000 });
+  await page.click('.preview__btn--primary');
+  await page.waitForFunction(
+    () => document.querySelector('.result h2')?.textContent?.includes('측정하지 못했'),
+    { timeout: 30000 },
+  );
+  check('신체 인식 실패 → 촬영 사진 표시', (await page.$('.result__failure-photo img')) !== null);
+  check('기준물 검출 테두리(polygon) 표시', (await page.$('.result__failure-photo polygon')) !== null);
+  const bodyCauses = await page.$eval('.result__causes', (el) => el.textContent);
+  check('신체 단계 원인 체크리스트 (전신 안내)', bodyCauses.includes('전신'));
+
+  // B-4 ② — 기준물 미검출: 사진은 보여주되 테두리 없음 + 기준물 단계 체크리스트
+  backend.kill();
+  check('신체 실패 백엔드 종료 대기', await waitBackend(false));
+  backend = spawn(
+    PYTHON,
+    ['-m', 'uvicorn', 'tests.e2e_fake_backend:app', '--port', '8000'],
+    { cwd: ROOT, stdio: 'ignore', env: { ...process.env, FITME_E2E_NODETECT: '1' } },
+  );
+  check('미검출 백엔드 기동', await waitBackend(true));
+  await page.click('.result__actions .result__btn--primary'); // 실패 화면의 "다시 촬영"
+  await page.waitForSelector('.camera', { timeout: 10000 });
+  await page.waitForSelector('.preview', { timeout: 30000 });
+  await page.click('.preview__btn--primary');
+  await page.waitForFunction(
+    () => document.querySelector('.result h2')?.textContent?.includes('측정하지 못했'),
+    { timeout: 30000 },
+  );
+  check('미검출 → 촬영 사진 표시', (await page.$('.result__failure-photo img')) !== null);
+  check('미검출 시 검출 테두리 없음', (await page.$('.result__failure-photo polygon')) === null);
+  const refCauses = await page.$eval('.result__causes', (el) => el.textContent);
+  check('기준물 단계 원인 체크리스트 (마커·평평 안내)',
+    refCauses.includes('마커') && refCauses.includes('평평'));
 } catch (e) {
   console.error('FAIL  예외 발생:', e.message);
   failures += 1;

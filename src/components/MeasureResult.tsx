@@ -122,12 +122,60 @@ function MeasureResult({
 
   const { response } = state;
 
-  // ok=false — 기준물 미검출·좌표 추출 실패: 사유 + 재촬영 유도 (가짜 숫자 없음)
+  // ok=false — 기준물 미검출·좌표 추출 실패: 사유 + 재촬영 유도 (가짜 숫자 없음).
+  // 5-4 백로그 B-4 — 서버가 본 사진을 그대로 보여주고(검출됐다면 위치 표시),
+  // 실패 단계에 맞는 원인 체크리스트를 붙인다. 1차 실기기에서 텍스트 사유만으로는
+  // 무엇을 고쳐야 할지 알기 어려움(세로 카드·대비 부족)이 실증된 데 따른 개선.
   if (!response.ok || !response.measurements) {
+    const refName = mode === 'simple' ? '카드' : '마커';
+    const corners = response.reference.detected
+      ? response.reference.cornersPx
+      : undefined;
+    const causes = !response.reference.detected
+      ? mode === 'simple'
+        ? [
+            '카드가 세로 방향이면 인식되지 않아요 — 가로 방향으로 들어 주세요',
+            '밝은 옷 위 밝은 카드는 대비가 부족해요 — 어두운 상의 위에 대 주세요',
+            '카드 전체가 가려지지 않고 선명하게 보여야 해요',
+          ]
+        : [
+            '마커가 접히거나 휘면 인식이 어려워요 — 평평하게 대 주세요',
+            '마커 전체가 프레임 안에 선명하게 보여야 해요',
+            '어두우면 인식률이 떨어져요 — 밝은 곳에서 찍어 주세요',
+          ]
+      : [
+          `${refName}는 정상 검출됐어요(사진의 초록 테두리) — 신체 인식이 안 됐어요`,
+          '전신(머리부터 발끝까지)이 프레임에 다 들어와야 해요',
+          '주변이 어두우면 신체 인식이 어려워요 — 밝은 곳에서 찍어 주세요',
+        ];
+    // 검출 라벨 위치 — 기준물 좌상단 위쪽, 화면 밖으로 잘리지 않게 클램프
+    const labelX = corners
+      ? Math.min(Math.min(...corners.map(([x]) => x)), image.width - 330)
+      : 0;
+    const labelY = corners
+      ? Math.max(Math.min(...corners.map(([, y]) => y)) - 20, 50)
+      : 0;
     return (
       <div className="result result--center">
         <h2>측정하지 못했어요</h2>
         <p className="result__note">{response.error ?? '알 수 없는 오류'}</p>
+        <div className="result__failure-photo">
+          <img
+            src={`data:${image.mimeType};base64,${image.base64}`}
+            alt="측정에 사용된 사진"
+          />
+          {corners && (
+            <svg viewBox={`0 0 ${image.width} ${image.height}`} aria-hidden="true">
+              <polygon points={corners.map(([x, y]) => `${x},${y}`).join(' ')} />
+              <text x={labelX} y={labelY}>✓ {refName} 검출됨</text>
+            </svg>
+          )}
+        </div>
+        <ul className="result__causes">
+          {causes.map((c) => (
+            <li key={c}>{c}</li>
+          ))}
+        </ul>
         <div className="result__actions">
           <button
             type="button"
