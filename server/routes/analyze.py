@@ -11,9 +11,10 @@ import binascii
 
 import cv2
 import numpy as np
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from models.schemas import AnalyzeRequest, AnalyzeResponse
+from services.access_guard import guard_ai_route
 from services.claude_vision import extract_body_landmarks
 from services.measure import compute_scale, measure_with_statistics
 from services.reference_detect import detect_aruco, detect_card
@@ -35,7 +36,13 @@ def _decode_bgr(image_base64: str) -> np.ndarray:
     return image
 
 
-@router.post("/analyze", response_model=AnalyzeResponse, response_model_exclude_none=True)
+# 6-1: AI 비용 라우트 — 베타 코드·사용량 상한 (FITME_BETA_CODE 설정 시에만 활성)
+@router.post(
+    "/analyze",
+    response_model=AnalyzeResponse,
+    response_model_exclude_none=True,
+    dependencies=[Depends(guard_ai_route)],
+)
 def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
     image = _decode_bgr(req.image.base64)
 

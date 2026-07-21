@@ -31,6 +31,7 @@ tests/fake-marker.y4m
 
 # 의류 스펙 SQLite 캐시 — 로컬 생성물 (services/clothing_store.py)
 server/data/clothing_cache.sqlite
+server/data/usage.sqlite
 
 # 로그
 *.log

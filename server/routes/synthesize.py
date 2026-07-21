@@ -15,16 +15,21 @@ import base64
 import binascii
 from io import BytesIO
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from models.schemas import SynthesizeRequest, SynthesizeResponse
+from services.access_guard import guard_ai_route
 from services.vton import VtonError, synthesize
 
 router = APIRouter()
 
 
+# 6-1: AI 비용 라우트 — 베타 코드·사용량 상한 (FITME_BETA_CODE 설정 시에만 활성)
 @router.post(
-    "/synthesize", response_model=SynthesizeResponse, response_model_exclude_none=True
+    "/synthesize",
+    response_model=SynthesizeResponse,
+    response_model_exclude_none=True,
+    dependencies=[Depends(guard_ai_route)],
 )
 def synthesize_endpoint(req: SynthesizeRequest) -> SynthesizeResponse:
     clothing = req.clothing
