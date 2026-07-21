@@ -71,6 +71,14 @@ try {
   // 6) 층위 2 — 실루엣 가이드 표시
   check('실루엣 가이드 표시', (await page.$('.camera__silhouette')) !== null);
 
+  // 6b) 5-4 백로그 ⑤ — 간편 모드: 가로 카드 박스 + 방향·대비 안내 문구
+  check('간편 모드 카드 박스 표시', (await page.$('.camera__card-box')) !== null);
+  const refText = await page.$eval('.camera__ref-guide', (el) => el.textContent);
+  check(
+    `카드 안내 문구에 방향·대비 조건 포함 (${refText})`,
+    refText.includes('가로') && refText.includes('어두운'),
+  );
+
   // 7) 카메라 뒤로 → 프로필 화면, 입력값 유지 (App 보관 원칙)
   await page.waitForSelector('.camera__back', { timeout: 5000 });
   await page.click('.camera__back');
@@ -97,6 +105,15 @@ try {
   await page.click('.profile__btn:not(.profile__btn--primary)');
   await page.waitForSelector('.mode-select', { timeout: 5000 });
   check('프로필 뒤로 → 모드 선택 화면', true);
+
+  // 11) 5-4 백로그 ⑤ — 정밀 모드: 카드 박스 없음 + 마커 안내 유지
+  await page.click('.mode-card--precise');
+  await page.waitForSelector('.profile', { timeout: 5000 });
+  await page.click(nextBtn);
+  await page.waitForSelector('.camera', { timeout: 10000 });
+  check('정밀 모드 카드 박스 없음', (await page.$('.camera__card-box')) === null);
+  const refTextPrecise = await page.$eval('.camera__ref-guide', (el) => el.textContent);
+  check(`정밀 모드 마커 안내 유지 (${refTextPrecise})`, refTextPrecise.includes('마커'));
 } catch (e) {
   console.error('FAIL  예외 발생:', e.message);
   failures += 1;

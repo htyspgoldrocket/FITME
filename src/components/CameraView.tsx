@@ -64,7 +64,14 @@ interface CameraViewProps {
 /** 층위 1 — 촬영 전 정적 안내 항목 (CLAUDE.md 전략 1 4층위 명세) */
 const GUIDE_ITEMS: { icon: string; text: (refName: string) => string }[] = [
   { icon: '👕', text: () => '몸에 밀착되는 옷을 입어 주세요 — 헐렁한 옷은 측정을 크게 왜곡해요' },
-  { icon: '📐', text: (ref) => `${ref}를 가슴에 평평하게 대 주세요` },
+  {
+    icon: '📐',
+    // 카드는 가로 방향+대비 조건이 검출 성패를 가른다 (5-4 실기기 실증 — 백로그 ⑤)
+    text: (ref) =>
+      ref === '카드'
+        ? '카드를 가슴에 가로 방향으로 평평하게 — 어두운 옷 위에서 잘 검출돼요'
+        : `${ref}를 가슴에 평평하게 대 주세요`,
+  },
   { icon: '📏', text: () => '약 2m 거리에서, 전신이 프레임에 꽉 차게 나오도록' },
   { icon: '📱', text: () => '카메라는 배꼽~가슴 높이에서 수직으로 (거치대 + 타이머 활용)' },
   { icon: '🧍', text: () => '몸을 화면 정중앙에 — 가장자리는 광각 왜곡이 생겨요' },
@@ -315,9 +322,27 @@ function CameraView({
                L50 120 L52 186 L62 186 L67 96 L66 52 L74 82 L82 78 L70 34
                L56 27 Z"
           />
+          {/* 5-4 백로그 ⑤ — 간편 모드: 가로 방향 카드 박스 (세로 카드는 검출
+              미지원 ±45°, 1차 실기기 실증). 비율은 ISO 카드 85.6:53.98 */}
+          {mode === 'simple' && (
+            <rect
+              className="camera__card-box"
+              x="39"
+              y="40"
+              width="22"
+              height="13.9"
+              rx="1.5"
+            />
+          )}
         </svg>
-        <div className="camera__ref-guide">
-          {mode === 'simple' ? '💳 카드를 여기(가슴 부근)에' : '🔳 마커를 여기(가슴 부근)에'}
+        <div
+          className={
+            'camera__ref-guide' + (mode === 'simple' ? ' camera__ref-guide--card' : '')
+          }
+        >
+          {mode === 'simple'
+            ? '💳 카드를 가로 방향으로, 어두운 상의 위에'
+            : '🔳 마커를 여기(가슴 부근)에'}
         </div>
       </div>
 

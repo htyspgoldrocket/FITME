@@ -252,6 +252,14 @@ body {
   stroke-linejoin: round;
 }
 
+/* 5-4 백로그 ⑤ — 간편 모드 가로 카드 박스 (실루엣 SVG 내부, 가슴 위치) */
+.camera__card-box {
+  fill: rgba(34, 197, 94, 0.1);
+  stroke: rgba(34, 197, 94, 0.9);
+  stroke-width: 1.2;
+  stroke-dasharray: none; /* 실루엣 점선과 구분 — 실선 */
+}
+
 .camera__ref-guide {
   position: absolute;
   /* 실루엣(top 5%, height 83%, viewBox 200) 기준 가슴 높이 ≈ 22~26% —
@@ -265,6 +273,11 @@ body {
   background: rgba(0, 0, 0, 0.45);
   font-size: 0.85rem;
   white-space: nowrap;
+}
+
+/* 간편 모드: 문구가 카드 박스(viewBox y 40~54 ≈ 화면 22~27%)를 가리지 않게 아래로 */
+.camera__ref-guide--card {
+  top: 28.5%;
 }
 
 .camera__top {
