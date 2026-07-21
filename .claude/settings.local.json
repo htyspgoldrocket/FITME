@@ -130,7 +130,19 @@
       "Bash(git commit -m ' *)",
       "WebFetch(domain:replicate.com)",
       "Bash(./venv/Scripts/python.exe -c \"import replicate; print\\(replicate.__version__\\)\")",
-      "Bash(./venv/Scripts/python.exe *)"
+      "Bash(./venv/Scripts/python.exe *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5173/)",
+      "Bash(node *)",
+      "Bash(npm run *)",
+      "Bash(echo \"grep exit: $?\")",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(taskkill //F //IM python.exe //FI \"WINDOWTITLE eq*\")",
+      "Bash(pkill -f \"uvicorn\")",
+      "Bash(pkill -f \"vite\")",
+      "Bash(curl -s -o /dev/null -w \"8000 status: %{http_code}\\\\n\" http://127.0.0.1:8000/health)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //F //PID 17160)",
+      "Bash(curl -s -o /dev/null -w \"8000 status after kill: %{http_code}\\\\n\" http://127.0.0.1:8000/health)"
     ]
   }
 }

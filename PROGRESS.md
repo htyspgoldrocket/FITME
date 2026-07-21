@@ -414,7 +414,29 @@
     사진 + 무신사 996177 실제 imageUrl) — ok:true, `debug_vton_test03_route.jpg`
     61.6KB, 5-1·5-2b 결과와 동일 품질 육안 재확인. **Phase 5 Step 1·2 완료 —
     다음은 5-3(히트맵+프론트 배선)**
-- **다음 시작 지점: 5-3 — 핏 히트맵 오버레이 + 프론트 배선**
+- **Phase 5-3 진행 중 (2026-07-21)** — 분해: a) synthesizeImage API 함수 /
+  b) 랜드마크 픽셀 좌표 노출(계약 확장) / c) "가상 착용 보기" 버튼+화면 /
+  d) 히트맵 오버레이(Canvas) / e) 통합 검증. **히트맵 방식은 사용자 결정
+  (2026-07-21): A) 정밀 랜드마크 기반** — measure.py의 median_landmarks를
+  AnalyzeResponse에 노출해 실제 몸 위치에 정확히 배치(근사 비례·범례 방식은
+  기각). 지금까지는 5-3a·5-3c를 함께 구현(API 함수는 버튼 배선과 묶어야
+  실제 검증 가능해 순서 조정) — b·d는 다음 단계.
+  - **5-3a·5-3c ✅ 완료**: `lib/api.ts` `synthesizeImage()`(POST /synthesize
+    래퍼, humanImage.frames는 페이로드 절약을 위해 전송 제외) +
+    `FitResultView`에 "가상 착용 보기" 섹션(idle/loading/error/done 상태,
+    fit과 달리 **버튼 클릭으로만 시작** — 자동 호출 안 함, VTON 비용 절약) +
+    "합성 이미지는 외관 참고용" 안내 문구(그림≠실핏 오해 차단, 07-20 결정
+    선반영) + App에 `synthesis` 캐시 추가(fit과 동일 트리거로 무효화:
+    새 사진·새 URL·새 스펙 로드, ok=false는 캐시 안 함).
+    검증: tsc+build 통과, dist 번들 API 키 grep 청정, E2E 신규 8/8
+    (`tests/e2e-synthesize.mjs` — 가짜 백엔드에 `/synthesize` 페이크 추가
+    (`e2e_fake_backend.py`, VTON 호출 0·라우트 로직은 실코드), 버튼 클릭
+    전 자동 호출 없음·클릭 시 이미지 표시·재진입 캐시로 재요청 없음 확인),
+    회귀 10/10(fit)·13/13(clothing-spec)·17/17(analyze)·11/11(clothing-url)·
+    14/14(profile)·7/7(autoshoot, 실백엔드 사전 기동 필요 — 배운 것 6번대로
+    실백엔드로 재확인해 정상, 가짜 백엔드로 돌리면 배너 셀렉터 타임아웃은
+    기존에 문서화된 전제조건 미충족일 뿐 회귀 아님) + pytest 159/159
+- **다음 시작 지점: 5-3b — 랜드마크 픽셀 좌표 노출 (AnalyzeResponse 계약 확장)**
 - (아래는 4-2 설계 기록 — 구현 완료됐으나 근거 추적용 보존)
   설계안 요지 (2026-07-18 제시 — 세션 무관 재개용 기록):
   - **알고리즘 2단계**: ① 하한 필터 — 비교 부위 중 tight가 있는 사이즈는

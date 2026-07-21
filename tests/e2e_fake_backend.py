@@ -67,6 +67,7 @@ FAKE_RAW_CLOTHING = {
     "brand": "E2E BRAND",
     "productName": "E2E test jacket",
     "categoryPath": ["아우터", "기타 점퍼/재킷"],
+    "imageUrl": "https://example.com/fake-garment.jpg",
     "typeName": "점퍼",
     "sizes": [
         {"label": "S", "measurements": {
@@ -98,6 +99,31 @@ clothing_route.scrape_musinsa = _fake_scrape
 fit_route.generate_feedback = (
     lambda m, s, r: generate_feedback(m, s, r, use_api=False)
 )
+
+
+# --- synthesize (5-2c/5-3c): replace only the VTON call -- route logic
+# (imageUrl 검증, base64 디코딩) runs for real, zero Replicate cost.
+import base64  # noqa: E402
+
+import routes.synthesize as synthesize_route  # noqa: E402
+
+# 1x1 흰색 JPEG (실제 <img> 렌더 확인용 — 유효한 최소 JPEG)
+_FAKE_SYNTH_JPEG = base64.b64decode(
+    "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgK"
+    "CgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/2wBDAQMDAwQDBAgEBAgQCwkL"
+    "EBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/wAAR"
+    "CAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAA"
+    "AAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oA"
+    "DAMBAAIRAxEAPwCdABmX/9k="
+)
+
+
+def _fake_synthesize(human_image, garment_image_url, clothing_category, garment_des=""):
+    return _FAKE_SYNTH_JPEG
+
+
+synthesize_route.synthesize = _fake_synthesize
+
 
 import tempfile  # noqa: E402
 

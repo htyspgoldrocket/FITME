@@ -16,6 +16,7 @@ import type {
   FitResponse,
   MeasurementMode,
   PhotoCheckResult,
+  SynthesizeResponse,
   UserProfile,
 } from '../types';
 
@@ -138,6 +139,43 @@ export async function calculateFit(
       throw new Error(`fit 실패: HTTP ${res.status}`);
     }
     return (await res.json()) as FitResponse;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * 가상 착용 이미지 합성 (5-3a — Phase 5-2c 백엔드 신규 연동).
+ * POST /synthesize: 촬영 사진 + 의류 이미지 → 합성 이미지(base64). VTON 호출
+ * 1회로 수십 초 걸릴 수 있어 타임아웃을 넉넉히 둔다.
+ *
+ * ⚠️ 서버가 쓰는 VTON 모델은 상업 사용 금지 라이선스(CLAUDE.md 12장) — 개발용.
+ *
+ * 합성용 이미지 없음·VTON 실패는 예외가 아니라 ok=false + error(한국어)로
+ * 돌아온다 (AnalyzeResponse와 같은 방식). 예외는 네트워크/서버 오류일 때만.
+ *
+ * humanImage.frames(다중 프레임)는 서버가 쓰지 않으므로 전송에서 제외한다 —
+ * 최대 7장을 그대로 보내면 페이로드가 7배로 불어난다.
+ */
+export async function synthesizeImage(
+  humanImage: CapturedImage,
+  clothing: ClothingSpec,
+  timeoutMs = 120_000,
+): Promise<SynthesizeResponse> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const { frames: _frames, ...humanImageWithoutFrames } = humanImage;
+  try {
+    const res = await fetch(`${API_BASE}/synthesize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ humanImage: humanImageWithoutFrames, clothing }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`synthesize 실패: HTTP ${res.status}`);
+    }
+    return (await res.json()) as SynthesizeResponse;
   } finally {
     clearTimeout(timer);
   }

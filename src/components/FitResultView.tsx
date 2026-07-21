@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react';
-import { calculateFit } from '../lib/api';
-import type { BodyMeasurements, ClothingSpec, FitResponse } from '../types';
+import { calculateFit, synthesizeImage } from '../lib/api';
+import type {
+  BodyMeasurements,
+  CapturedImage,
+  ClothingSpec,
+  FitResponse,
+  SynthesizeResponse,
+} from '../types';
 
 interface FitResultViewProps {
+  image: CapturedImage;
   measurements: BodyMeasurements;
   spec: ClothingSpec;
   /** 같은 입력의 이전 핏 결과 (App 보관) — 뒤로가기 재진입 시 재요청(AI 1회) 방지 */
   cached: FitResponse | null;
   onLoaded: (response: FitResponse) => void;
+  /** 같은 입력의 이전 합성 결과 (App 보관) — 뒤로가기 재진입 시 재요청(VTON 1회) 방지 */
+  synthCached: SynthesizeResponse | null;
+  onSynthesized: (response: SynthesizeResponse) => void;
   onBack: () => void;
   onRestart: () => void;
 }
@@ -36,17 +46,46 @@ type State =
   | { status: 'done'; response: FitResponse }
   | { status: 'error'; message: string };
 
+type SynthState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'done'; response: SynthesizeResponse }
+  | { status: 'error'; message: string };
+
 /** 핏 결과 화면 (4-4b) — /fit 호출·로딩·실패·결과 표시를 담당 */
 function FitResultView({
+  image,
   measurements,
   spec,
   cached,
   onLoaded,
+  synthCached,
+  onSynthesized,
   onBack,
   onRestart,
 }: FitResultViewProps) {
   const [state, setState] = useState<State>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0); // "다시 시도" 시 증가 → 재호출
+
+  // 5-3c: 가상 착용 합성 — 버튼을 눌러야 시작 (fit과 달리 자동 호출 아님, 비용 절약)
+  const [synthState, setSynthState] = useState<SynthState>(
+    synthCached !== null ? { status: 'done', response: synthCached } : { status: 'idle' },
+  );
+
+  const runSynthesis = () => {
+    setSynthState({ status: 'loading' });
+    synthesizeImage(image, spec)
+      .then((response) => {
+        setSynthState({ status: 'done', response });
+        if (response.ok) onSynthesized(response);
+      })
+      .catch((e) => {
+        setSynthState({
+          status: 'error',
+          message: e instanceof Error ? e.message : String(e),
+        });
+      });
+  };
 
   // cached·onLoaded는 의존성에서 의도적으로 제외 — 캐시는 마운트 직후(attempt=0)
   // 판단 전용이고, onLoaded로 캐시가 갱신될 때 재실행되면 무한 루프가 된다
@@ -186,6 +225,59 @@ function FitResultView({
         </details>
       )}
 
+      <div className="fit__synth">
+        <h3>가상 착용 보기</h3>
+
+        {synthState.status === 'idle' && (
+          <button
+            type="button"
+            className="result__btn result__btn--primary"
+            onClick={runSynthesis}
+          >
+            가상 착용 이미지 생성
+          </button>
+        )}
+
+        {synthState.status === 'loading' && (
+          <p className="result__note">합성 중이에요 — 최대 1분 정도 걸릴 수 있어요</p>
+        )}
+
+        {synthState.status === 'error' && (
+          <>
+            <p className="result__note">합성 요청에 실패했어요: {synthState.message}</p>
+            <button type="button" className="result__btn" onClick={runSynthesis}>
+              다시 시도
+            </button>
+          </>
+        )}
+
+        {synthState.status === 'done' && !synthState.response.ok && (
+          <>
+            <p className="result__note">
+              {synthState.response.error ?? '합성하지 못했어요'}
+            </p>
+            <button type="button" className="result__btn" onClick={runSynthesis}>
+              다시 시도
+            </button>
+          </>
+        )}
+
+        {synthState.status === 'done' &&
+          synthState.response.ok &&
+          synthState.response.imageBase64 && (
+            <>
+              <img
+                src={`data:image/jpeg;base64,${synthState.response.imageBase64}`}
+                alt="가상 착용 이미지"
+                className="fit__synth-img"
+              />
+              <p className="result__note">
+                합성 이미지는 외관 참고용이에요 — 실제 핏은 위 표의 수치를 기준으로 봐주세요
+              </p>
+            </>
+          )}
+      </div>
+
       <div className="result__actions">
         <button type="button" className="result__btn" onClick={onBack}>
           의류 정보로
@@ -193,7 +285,6 @@ function FitResultView({
         <button type="button" className="result__btn" onClick={onRestart}>
           처음으로
         </button>
-        {/* 가상 착용 이미지(Phase 5)로 진행하는 버튼은 5단계에서 추가 — 규칙 4 */}
       </div>
     </div>
   );

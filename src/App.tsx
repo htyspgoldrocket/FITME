@@ -15,6 +15,7 @@ import type {
   ClothingResponse,
   FitResponse,
   MeasurementMode,
+  SynthesizeResponse,
   UserProfile,
 } from './types';
 
@@ -46,6 +47,9 @@ function App() {
   const [clothing, setClothing] = useState<ClothingResponse | null>(null);
   // 핏 결과 캐시 (4-4b) — 입력(측정·의류)이 바뀌면 무효화 (재요청 = AI 1회)
   const [fit, setFit] = useState<FitResponse | null>(null);
+  // 가상 착용 합성 캐시 (5-3c) — fit과 같은 트리거(새 사진·새 의류)로 무효화.
+  // fit과 달리 자동 호출은 안 함(버튼으로 시작, VTON 1회 비용 절약)
+  const [synthesis, setSynthesis] = useState<SynthesizeResponse | null>(null);
   // 키(필수)·몸무게(선택) — 척도 캘리브레이션·BMI 보정 입력(2-7b).
   // 재촬영·뒤로가기 후에도 유지되도록 App이 보관 (Phase 1 배운 것 3번)
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -74,6 +78,7 @@ function App() {
       setImage(await captureFramesFromVideo(video));
       setAnalysis(null); // 새 사진 → 이전 분석 캐시 무효화 (3-1)
       setFit(null); // 측정이 바뀌므로 핏 캐시도 무효화 (4-4b)
+      setSynthesis(null); // 사진이 바뀌므로 합성 캐시도 무효화 (5-3c)
       setScreen('preview');
     } catch (e) {
       alert(e instanceof Error ? e.message : String(e));
@@ -160,6 +165,7 @@ function App() {
           if (url !== clothingUrl) {
             setClothing(null); // 새 URL → 이전 조회 캐시 무효화
             setFit(null); // 의류가 바뀌므로 핏 캐시도 무효화 (4-4b)
+            setSynthesis(null); // 의류가 바뀌므로 합성 캐시도 무효화 (5-3c)
           }
           setClothingUrl(url);
           setScreen('clothing-spec');
@@ -181,6 +187,7 @@ function App() {
         onLoaded={(r) => {
           setClothing(r.ok ? r : null);
           setFit(null);
+          setSynthesis(null); // 의류 스펙이 새로 로드되면 합성 캐시도 무효화 (5-3c)
         }}
         onEditUrl={() => setScreen('clothing-url')}
         onRestart={() => setScreen('mode-select')}
@@ -192,16 +199,20 @@ function App() {
   // 핏 결과 (4-4b) — /fit 호출·로딩·실패 처리는 FitResultView가 담당
   if (
     screen === 'fit-result' &&
+    image !== null &&
     analysis?.measurements != null &&
     clothing?.spec != null
   ) {
     return (
       <FitResultView
+        image={image}
         measurements={analysis.measurements}
         spec={clothing.spec}
         cached={fit}
         // ok=false는 캐시하지 않음 — 재진입 시 재계산으로 복구 기회
         onLoaded={(r) => setFit(r.ok ? r : null)}
+        synthCached={synthesis}
+        onSynthesized={setSynthesis}
         onBack={() => setScreen('clothing-spec')}
         onRestart={() => setScreen('mode-select')}
       />
