@@ -163,7 +163,26 @@
       "PowerShell(Start-Sleep -Seconds 4; curl.exe -s http://127.0.0.1:8000/health; node tests/e2e-autoshoot.mjs)",
       "PowerShell(node tests/e2e-analyze.mjs)",
       "PowerShell(Copy-Item *)",
-      "PowerShell(node tests/screenshot-camera.mjs C:\\\\claude_code\\\\FITME\\\\tmp-screenshots\\\\tool-check.png 160 precise)"
+      "PowerShell(node tests/screenshot-camera.mjs C:\\\\claude_code\\\\FITME\\\\tmp-screenshots\\\\tool-check.png 160 precise)",
+      "Bash(git *)",
+      "PowerShell(Start-Sleep -Seconds 3; node tests/screenshot-camera.mjs tmp-screenshots/b3-guide-simple.png 172 simple guide; node tests/screenshot-camera.mjs tmp-screenshots/b3-guide-precise.png 172 precise guide)",
+      "PowerShell(node tests/e2e-profile-flow.mjs)",
+      "PowerShell(Start-Process -FilePath \"C:\\\\claude_code\\\\FITME\\\\server\\\\venv\\\\Scripts\\\\uvicorn.exe\" -ArgumentList \"main:app --port 8000\" -WorkingDirectory \"C:\\\\claude_code\\\\FITME\\\\server\" -WindowStyle Hidden; Start-Sleep -Seconds 6; Invoke-RestMethod http://127.0.0.1:8000/health)",
+      "PowerShell(node tests/e2e-autoshoot.mjs)",
+      "PowerShell(node \"C:\\\\Users\\\\htysp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--claude-code-FITME\\\\e0d8b449-490e-4de5-b535-9af36f8494a9\\\\scratchpad\\\\shot-failure.mjs\")",
+      "PowerShell(node tests/e2e-clothing-spec.mjs)",
+      "PowerShell(Start-Sleep -Seconds 3; \\(Invoke-RestMethod http://localhost:4173/api/health\\) | Format-List; \\(Invoke-WebRequest http://localhost:4173 -UseBasicParsing\\).StatusCode)",
+      "PowerShell(Start-Sleep -Seconds 8; Select-String -Path \"C:\\\\Users\\\\htysp\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--claude-code-FITME\\\\5b3e3e87-18a3-4358-a4ff-ccdb4af3d170\\\\tasks\\\\ba6uacrgl.output\" -Pattern \"trycloudflare.com\" | Select-Object -First 3 | ForEach-Object { $_.Line })",
+      "PowerShell(\\(Invoke-WebRequest \"https://concentration-switching-massage-spectacular.trycloudflare.com\" -UseBasicParsing -TimeoutSec 30\\).StatusCode)",
+      "PowerShell(.\\\\venv\\\\Scripts\\\\python.exe -m pytest tests -q 2>$null | Select-Object -Last 5)",
+      "PowerShell(& \"C:\\\\claude_code\\\\FITME\\\\server\\\\venv\\\\Scripts\\\\python.exe\" -m pytest \"C:\\\\claude_code\\\\FITME\\\\server\\\\tests\" -q --rootdir \"C:\\\\claude_code\\\\FITME\\\\server\" | Select-Object -Last 6)",
+      "PowerShell(& \"C:\\\\claude_code\\\\FITME\\\\server\\\\venv\\\\Scripts\\\\python.exe\" -m pytest \"C:\\\\claude_code\\\\FITME\\\\server\\\\tests\" -q --rootdir \"C:\\\\claude_code\\\\FITME\\\\server\" | Select-Object -Last 3; npx tsc --noEmit; if \\($?\\) { \"tsc 통과\" })",
+      "PowerShell(Start-Sleep -Seconds 3; node tests/e2e-beta-gate.mjs)",
+      "PowerShell(node tests/e2e-clothing-url.mjs)",
+      "PowerShell(node tests/e2e-fit.mjs)",
+      "PowerShell(node tests/e2e-synthesize.mjs)",
+      "PowerShell(Start-Process -FilePath \"C:\\\\claude_code\\\\FITME\\\\server\\\\venv\\\\Scripts\\\\uvicorn.exe\" -ArgumentList \"main:app --port 8000\" -WorkingDirectory \"C:\\\\claude_code\\\\FITME\\\\server\" -WindowStyle Hidden; Start-Sleep -Seconds 6; node tests/e2e-autoshoot.mjs)",
+      "PowerShell(node \"C:\\\\claude_code\\\\FITME\\\\tmp-screenshots\\\\shot-beta-gate.mjs\")"
     ]
   }
 }

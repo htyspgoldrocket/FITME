@@ -662,6 +662,12 @@
     **회귀 전 스위트**: analyze 27/27·profile 23/23·clothing-url 11/11·
     clothing-spec 13/13·fit 10/10·synthesize 12/12·autoshoot 10/10(실백엔드),
     게이트 스크린샷 육안 확인
+- **다음 시작 지점: 6-3 배포 패키징** — ① FastAPI가 프론트 빌드(dist)를
+  정적 서빙(배포 유닛 1개화 — SPA 폴백 포함, /api 프리픽스는 라우트 그대로)
+  ② 클라우드 컨테이너용 Dockerfile(python + opencv-python + playwright
+  chromium 설치 — 이미지 큼 주의) ③ 이후 6-4 호스팅(클라우드 컨테이너 확정,
+  Railway 등 — 계정·카드는 사용자 준비) + 환경 변수 셋업(ANTHROPIC_API_KEY·
+  REPLICATE_API_TOKEN·FITME_BETA_CODE·상한 2종) → 6-5 배포 URL 실기기 검증
 - (아래는 4-2 설계 기록 — 구현 완료됐으나 근거 추적용 보존)
   설계안 요지 (2026-07-18 제시 — 세션 무관 재개용 기록):
   - **알고리즘 2단계**: ① 하한 필터 — 비교 부위 중 tight가 있는 사이즈는
