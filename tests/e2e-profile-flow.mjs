@@ -64,6 +64,9 @@ try {
   await page.waitForSelector('.camera-guide', { timeout: 5000 });
   const itemCount = await page.$$eval('.camera-guide__list li', (l) => l.length);
   check(`안내 오버레이 자동 표시 + 항목 5개 (실제 ${itemCount})`, itemCount === 5);
+  // 5b) 5-4 백로그 B-3 — 항목별 픽토그램(인라인 SVG) 표시
+  const figCount = await page.$$eval('.camera-guide__fig svg', (l) => l.length);
+  check(`안내 항목별 픽토그램 5개 표시 (실제 ${figCount})`, figCount === 5);
   await page.click('.camera-guide__confirm');
   const guideGone = (await page.$('.camera-guide')) === null;
   check('확인했어요 → 안내 오버레이 닫힘', guideGone);

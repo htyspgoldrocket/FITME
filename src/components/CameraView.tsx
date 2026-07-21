@@ -11,6 +11,7 @@ import {
 } from '../lib/camera';
 import { checkPhoto } from '../lib/api';
 import { captureFromVideo } from '../lib/image';
+import GuideIllustration, { type GuideKind } from './GuideIllustration';
 import type { MeasurementMode, PhotoCheckResult } from '../types';
 
 /** 셔터 타이머(초). 0 = 즉시 촬영 */
@@ -77,20 +78,21 @@ interface CameraViewProps {
   heightCm: number;
 }
 
-/** 층위 1 — 촬영 전 정적 안내 항목 (CLAUDE.md 전략 1 4층위 명세) */
-const GUIDE_ITEMS: { icon: string; text: (refName: string) => string }[] = [
-  { icon: '👕', text: () => '몸에 밀착되는 옷을 입어 주세요 — 헐렁한 옷은 측정을 크게 왜곡해요' },
+/** 층위 1 — 촬영 전 정적 안내 항목 (CLAUDE.md 전략 1 4층위 명세).
+ *  그림(kind→GuideIllustration)은 5-4 백로그 B-3 — 글을 읽지 않아도 조건이 보이게 */
+const GUIDE_ITEMS: { kind: GuideKind; text: (refName: string) => string }[] = [
+  { kind: 'fit', text: () => '몸에 밀착되는 옷을 입어 주세요 — 헐렁한 옷은 측정을 크게 왜곡해요' },
   {
-    icon: '📐',
+    kind: 'reference',
     // 카드는 가로 방향+대비 조건이 검출 성패를 가른다 (5-4 실기기 실증 — 백로그 ⑤)
     text: (ref) =>
       ref === '카드'
         ? '카드를 가슴에 가로 방향으로 평평하게 — 어두운 옷 위에서 잘 검출돼요'
         : `${ref}를 가슴에 평평하게 대 주세요`,
   },
-  { icon: '📏', text: () => '약 2m 거리에서 — 머리와 발이 노란 선에 오면 딱 좋아요' },
-  { icon: '📱', text: () => '카메라는 배꼽~가슴 높이에서 수직으로 (거치대 + 타이머 활용)' },
-  { icon: '🧍', text: () => '몸을 화면 정중앙에 — 가장자리는 광각 왜곡이 생겨요' },
+  { kind: 'distance', text: () => '약 2m 거리에서 — 머리와 발이 노란 선에 오면 딱 좋아요' },
+  { kind: 'camera', text: () => '카메라는 배꼽~가슴 높이에서 수직으로 (거치대 + 타이머 활용)' },
+  { kind: 'center', text: () => '몸을 화면 정중앙에 — 가장자리는 광각 왜곡이 생겨요' },
 ];
 
 /** 촬영 화면 — 전/후면 카메라 + 전신/기준물 가이드 오버레이 + 자이로 수직 표시 */
@@ -438,9 +440,14 @@ function CameraView({
         <div className="camera-guide" role="dialog" aria-label="촬영 방법 안내">
           <h2 className="camera-guide__title">정확한 측정을 위한 촬영 방법</h2>
           <ul className="camera-guide__list">
-            {GUIDE_ITEMS.map(({ icon, text }) => (
-              <li key={icon}>
-                <span className="camera-guide__icon">{icon}</span>
+            {GUIDE_ITEMS.map(({ kind, text }) => (
+              <li key={kind}>
+                <span className="camera-guide__fig">
+                  <GuideIllustration
+                    kind={kind}
+                    refType={mode === 'simple' ? 'card' : 'marker'}
+                  />
+                </span>
                 {text(mode === 'simple' ? '카드' : '마커')}
               </li>
             ))}

@@ -1,7 +1,8 @@
 // 카메라 화면 스크린샷 도구 — 촬영 가이드 UI(카드 박스·거리 자 등) 육안 확인용
 // (5-4 백로그 B-1/B-2 검증에서 사용, 13-4 검증 자산으로 보존)
 //
-// 사용: node tests/screenshot-camera.mjs <출력경로.png> [키cm=172] [모드=simple|precise]
+// 사용: node tests/screenshot-camera.mjs <출력경로.png> [키cm=172] [모드=simple|precise] [guide]
+//   guide — 층위 1 안내 오버레이를 닫지 않고 열린 상태로 캡처 (B-3 그림 확인용)
 // 사전 조건: npm run dev (5173). 백엔드는 불필요(판정 배너는 서버 다운 표시 — 정상)
 import puppeteer from 'puppeteer-core';
 
@@ -9,6 +10,7 @@ const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const OUT = process.argv[2] ?? 'camera-screenshot.png';
 const HEIGHT = process.argv[3] ?? '172';
 const MODE = process.argv[4] === 'precise' ? 'precise' : 'simple';
+const KEEP_GUIDE = process.argv[5] === 'guide';
 
 const browser = await puppeteer.launch({
   executablePath: CHROME,
@@ -27,9 +29,11 @@ await page.waitForSelector('.profile');
 await page.type('.profile__field:nth-of-type(1) input', HEIGHT);
 await page.click('.profile__btn--primary');
 await page.waitForSelector('.camera');
-// 층위 1 안내가 떠 있으면 닫는다 (세션 첫 진입)
-const confirm = await page.$('.camera-guide__confirm');
-if (confirm) await confirm.click();
+// 층위 1 안내가 떠 있으면 닫는다 (세션 첫 진입). guide 인자면 열린 채 캡처
+if (!KEEP_GUIDE) {
+  const confirm = await page.$('.camera-guide__confirm');
+  if (confirm) await confirm.click();
+}
 await new Promise((r) => setTimeout(r, 800)); // 오버레이 렌더 안정화
 await page.screenshot({ path: OUT });
 await browser.close();

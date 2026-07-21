@@ -385,15 +385,23 @@ body {
 .camera-guide__list li {
   display: flex;
   gap: 12px;
-  align-items: flex-start;
+  align-items: center;
   font-size: 0.95rem;
   line-height: 1.5;
   color: #e5e7eb;
 }
 
-.camera-guide__icon {
+/* 층위 1 항목별 픽토그램 (5-4 백로그 B-3 — GuideIllustration) */
+.camera-guide__fig {
   flex-shrink: 0;
-  font-size: 1.2rem;
+  width: 52px;
+  height: 52px;
+}
+
+.camera-guide__fig svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .camera-guide__confirm {
