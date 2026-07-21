@@ -107,6 +107,32 @@ try {
   check('❓ 버튼으로 안내 재열람', true);
   await page.click('.camera-guide__confirm');
 
+  // 9b) 5-4 백로그 ④ 보완 — 실루엣·거리 자 키 비례 스케일 (발 기준 고정).
+  // 고정 실루엣은 작은 키를 근거리로 유도(마커 밴드와 충돌)하므로 키에 비례
+  const rect172 = await page.$eval('.camera__silhouette', (el) => {
+    const r = el.getBoundingClientRect();
+    return { height: r.height, bottom: r.bottom };
+  });
+  await page.click('.camera__back');
+  await page.waitForSelector('.profile', { timeout: 5000 });
+  await page.$eval(heightInput, (el) => (el.value = ''));
+  await page.type(heightInput, '150');
+  await page.click(nextBtn);
+  await page.waitForSelector('.camera', { timeout: 10000 });
+  const rect150 = await page.$eval('.camera__silhouette', (el) => {
+    const r = el.getBoundingClientRect();
+    return { height: r.height, bottom: r.bottom };
+  });
+  const ratio = rect150.height / rect172.height;
+  check(
+    `키 150 실루엣이 172보다 비례 축소 (비율 ${ratio.toFixed(3)}, 기대 ${(150 / 172).toFixed(3)})`,
+    Math.abs(ratio - 150 / 172) < 0.01,
+  );
+  check(
+    `발 위치는 키와 무관하게 고정 (bottom 차 ${Math.abs(rect150.bottom - rect172.bottom).toFixed(1)}px)`,
+    Math.abs(rect150.bottom - rect172.bottom) < 1,
+  );
+
   // 10) 프로필에서 뒤로 → 모드 선택
   await page.click('.camera__back');
   await page.waitForSelector('.profile', { timeout: 5000 });

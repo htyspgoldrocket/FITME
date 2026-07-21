@@ -232,7 +232,9 @@ body {
   pointer-events: none;
 }
 
-/* 층위 2 — 정중앙 실루엣 가이드 (2-8c, 광각 가장자리 회피) */
+/* 층위 2 — 정중앙 실루엣 가이드 (2-8c, 광각 가장자리 회피).
+   높이·bottom은 키 비례 스케일을 위해 CameraView가 인라인으로 덮어쓴다
+   (발 기준 고정 — 아래 값은 기준 키 170cm의 폴백) */
 .camera__silhouette {
   position: absolute;
   top: 5%;
@@ -275,10 +277,8 @@ body {
   white-space: nowrap;
 }
 
-/* 간편 모드: 문구가 카드 박스(viewBox y 40~54 ≈ 화면 22~27%)를 가리지 않게 아래로 */
-.camera__ref-guide--card {
-  top: 28.5%;
-}
+/* 기준물 칩의 top은 키 비례 스케일에 맞춰 CameraView가 인라인으로 계산
+   (CHIP_K_PRECISE/CHIP_K_CARD — 위 24%와 카드용 28.5% 튜닝값을 역산한 상수) */
 
 /* 5-4 백로그 ④ — 거리 자 (실루엣 SVG 내부, viewBox 좌표). 노랑 —
    실루엣 흰 점선·카드 박스 초록과 구분 */

@@ -130,6 +130,8 @@ function App() {
         voiceGuide={voiceGuide}
         onToggleVoiceGuide={() => setVoiceGuide((v) => !v)}
         capturing={capturing}
+        // 프로필 화면을 거쳐야 카메라에 오므로 실사용에선 항상 존재 — 폴백은 기준 키
+        heightCm={profile?.heightCm ?? 170}
       />
     );
   }
