@@ -76,6 +76,7 @@ class ClothingSpec(BaseModel):
     sizes: list[ClothingSize]                    # 정규화된 사이즈 목록
     needsUserInput: Optional[bool] = None        # 정규화 불가 → 사용자 실측 입력 요청
     warnings: Optional[list[str]] = None         # 정규화 과정 경고 (한국어)
+    imageUrl: Optional[str] = None               # 상품 대표 이미지 (5-2a — VTON 합성 입력용)
 
 
 # ===== 핏 스코어 (Phase 4 산출물) =====

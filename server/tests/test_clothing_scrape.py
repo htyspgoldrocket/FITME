@@ -56,6 +56,7 @@ GOODS_DATA = {
         "categoryDepth2Name": "아우터",
         "categoryDepth3Name": "기타 점퍼/재킷",
     },
+    "thumbnailImageUrl": "/images/goods_img/20190327/6516683/6516683_1_500.jpg",
 }
 
 
@@ -65,6 +66,9 @@ def test_parse_goods():
     assert g["brand"] == "아크테릭스"
     assert g["productName"].startswith("세륨 SL 후디")
     assert g["categoryPath"] == ["스포츠/레저", "아우터", "기타 점퍼/재킷"]
+    assert g["imageUrl"] == (
+        "https://image.msscdn.net/images/goods_img/20190327/6516683/6516683_1_500.jpg"
+    )
 
 
 def test_parse_goods_missing_fields():
@@ -72,6 +76,12 @@ def test_parse_goods_missing_fields():
     assert g["brand"] == "nobrand"  # brandInfo 없으면 영문 코드로 폴백
     assert g["categoryPath"] == []
     assert g["productName"] == ""
+    assert g["imageUrl"] is None  # 없는 부위를 가짜로 채우지 않음 (규칙 1)
+
+
+def test_parse_goods_image_url_already_absolute():
+    g = parse_goods({"goodsNo": 1, "thumbnailImageUrl": "https://cdn.example.com/x.jpg"})
+    assert g["imageUrl"] == "https://cdn.example.com/x.jpg"
 
 
 # ---------- 사이즈 파싱 ----------

@@ -102,6 +102,7 @@ export interface ClothingSpec {
   sizes: ClothingSize[];       // 정규화된 사이즈 목록
   needsUserInput?: boolean;    // 정규화 불가 표기 존재 → 사용자 실측 입력 요청
   warnings?: string[];         // 정규화 과정 경고 (한국어)
+  imageUrl?: string;           // 상품 대표 이미지 (5-2a — VTON 합성 입력용, 없으면 합성 불가)
 }
 
 // ===== /clothing 응답 (Phase 3-4 — 스크래핑 실패를 크래시 없이 전달) =====

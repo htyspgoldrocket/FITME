@@ -22,6 +22,9 @@ from urllib.parse import urlparse
 GOODS_API = "https://goods-detail.musinsa.com/api2/goods/{goods_no}"
 SIZE_API = "https://goods-detail.musinsa.com/api2/goods/{goods_no}/actual-size"
 
+# thumbnailImageUrl은 도메인 없는 상대 경로로 온다 (2026-07-21 996177 실증 확인)
+IMAGE_CDN_BASE = "https://image.msscdn.net"
+
 # 일반 브라우저 UA — 기본 UA(HeadlessChrome/python-requests류)는 차단 대상이 되기 쉽다
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -65,8 +68,17 @@ def _check_meta(payload: dict[str, Any], what: str) -> dict[str, Any]:
     return data
 
 
+def _absolute_image_url(path: str | None) -> str | None:
+    """무신사 이미지 경로 → 절대 URL. 이미 절대 URL이면 그대로 둔다."""
+    if not path:
+        return None
+    if path.startswith("http://") or path.startswith("https://"):
+        return path
+    return f"{IMAGE_CDN_BASE}/{path.lstrip('/')}"
+
+
 def parse_goods(data: dict[str, Any]) -> dict[str, Any]:
-    """상품 API data → 브랜드·상품명·카테고리 (순수 함수 — 테스트 대상)."""
+    """상품 API data → 브랜드·상품명·카테고리·대표 이미지 (순수 함수 — 테스트 대상)."""
     category = data.get("category") or {}
     path = [
         category.get(k)
@@ -80,6 +92,7 @@ def parse_goods(data: dict[str, Any]) -> dict[str, Any]:
         "brandEnglishName": brand_info.get("brandEnglishName") or "",
         "productName": data.get("goodsNm") or "",
         "categoryPath": path,
+        "imageUrl": _absolute_image_url(data.get("thumbnailImageUrl")),
     }
 
 
@@ -128,7 +141,7 @@ def scrape_musinsa(url: str, timeout_ms: int = 15000) -> dict[str, Any]:
     """무신사 상품 URL → 원자료 사이즈 테이블.
 
     반환: {source, url, goodsNo, brand, brandEnglishName, productName,
-           categoryPath, typeName, sizes:[{label, measurements:{부위명: cm}}]}
+           categoryPath, imageUrl, typeName, sizes:[{label, measurements:{부위명: cm}}]}
     실패: ClothingScrapeError (message는 한국어 사용자 안내)
     """
     goods_no = parse_musinsa_url(url)

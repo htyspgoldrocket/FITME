@@ -374,7 +374,18 @@
   requirements.txt 추가. **5-2 인수인계**: 모델 버전을 하드코딩했음 —
   Replicate가 모델을 갱신하면 버전이 바뀔 수 있어 5-2에서 버전 관리 방식
   (고정 vs 동적 조회) 결정 필요
-- **다음 시작 지점: 5-2 — 백엔드 배선 (분해 제시, 사용자 확인 대기)**
+- **5-2 진행 중 (2026-07-21)** — 분해: a) 무신사 이미지 URL 추출 / b) VTON
+  서비스 모듈화 / c) POST /synthesize 라우트
+  - **5-2a ✅ 완료**: `clothing_scrape.py` `parse_goods()`에 `imageUrl` 추출
+    추가 — `thumbnailImageUrl`(상대 경로) + `IMAGE_CDN_BASE`(image.msscdn.net,
+    5-1 실증 확인)로 절대 URL 조립, 이미 절대 URL이면 그대로 통과.
+    `clothing_normalize.py` `normalize_scraped()`가 raw→spec으로 pass-through
+    (없으면 키 자체 생략 — 가짜 채움 금지, 규칙 1). **계약 확장**
+    `ClothingSpec.imageUrl?`(CLAUDE.md 6장→types/index.ts→schemas.py 동기화).
+    검증: pytest 3건 신규(절대/상대 경로 변환, 누락 시 미포함) 전체 141/141 +
+    tsc 통과, 실상품(996177) end-to-end 확인(scrape→normalize→Pydantic 검증
+    까지 URL 일치, 5-1에서 쓴 이미지와 동일 URL 재확인)
+- **다음 시작 지점: 5-2b — VTON 서비스 모듈화**
 - (아래는 4-2 설계 기록 — 구현 완료됐으나 근거 추적용 보존)
   설계안 요지 (2026-07-18 제시 — 세션 무관 재개용 기록):
   - **알고리즘 2단계**: ① 하한 필터 — 비교 부위 중 tight가 있는 사이즈는

@@ -135,6 +135,8 @@ def normalize_scraped(raw: dict[str, Any]) -> dict[str, Any]:
         spec["needsUserInput"] = True
     if warnings:
         spec["warnings"] = warnings
+    if raw.get("imageUrl"):
+        spec["imageUrl"] = raw["imageUrl"]
     return spec
 
 

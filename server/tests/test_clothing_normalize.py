@@ -21,6 +21,7 @@ RAW_OUTER = {
     "brand": "아크테릭스",
     "productName": "세륨 SL 후디 남성",
     "categoryPath": ["스포츠/레저", "아우터", "기타 점퍼/재킷"],
+    "imageUrl": "https://image.msscdn.net/images/goods_img/20190327/6516683/x_500.jpg",
     "typeName": "점퍼",
     "sizes": [
         {"label": "S", "measurements": {
@@ -56,6 +57,15 @@ def test_normalize_outer():
     }
     assert "needsUserInput" not in spec
     assert "warnings" not in spec
+    assert spec["imageUrl"] == (
+        "https://image.msscdn.net/images/goods_img/20190327/6516683/x_500.jpg"
+    )
+
+
+def test_normalize_missing_image_url_not_faked():
+    """imageUrl 없는 원자료 → spec에 키 자체가 없어야 함 (가짜 채움 금지, 규칙 1)."""
+    spec = normalize_scraped(RAW_PANTS)
+    assert "imageUrl" not in spec
 
 
 def test_normalize_pants():
