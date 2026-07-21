@@ -260,9 +260,15 @@ ANATOMY_RATIO_RANGES = {
 # 신뢰도 산정 기준 (모두 이 상수로 관리):
 SPREAD_HIGH_CM = 1.0        # 반복 편차 ≤1cm → high 후보
 SPREAD_MEDIUM_CM = 2.0      # ≤2cm → medium (Gate 기준과 동일), >2cm → low
-# 마커 크기 임계 — 40→60 상향 (2026-07-16 실증: v1 59.9px는 Gate 7/8,
-# v2 42px는 4/8 — 마커 크기가 반복 편차의 지배 변수. 60px ≈ 1.2mm/px 이하 확보)
-MIN_MARKER_WIDTH_PX = 60.0  # 마커가 이보다 작으면 척도 노이즈 증폭 → 한 단계 강등
+# 마커 크기 적정 범위 (2026-07-21 재평가 — 실기기 근거리 실증 후 밴드화):
+# 하한 60→40: 기존 60의 근거("v2 42px가 Gate 4/8")는 마커 척도 시절(2-7b 이전)
+#   실증 — A안(키 척도) 확정 후에는 마커 px가 몸 측정 척도에 들어가지 않아 무효.
+# 상한 55 신설: 마커가 클수록(가까울수록) 깊이 편향(r) 실증 —
+#   v2 42px→r=1.006(ok) / v3 57px→1.161 / v1 59.9px→1.121 / 실기기 3회
+#   (60px 이상 통과 사진) r=1.09~1.11 전부 depth_bias (fixtures 오프라인 재계산).
+#   ⚠️ 근거는 표본 1인 + 기기 화각 의존 — 실기기 재검증에서 조정될 수 있음.
+MIN_MARKER_WIDTH_PX = 40.0  # 이보다 작으면(원거리) 교차 검증 척도 노이즈 → 강등
+MAX_MARKER_WIDTH_PX = 55.0  # 이보다 크면(근거리) 깊이 편향 → 강등
 TILT_RATIO_RANGE = (0.90, 1.10)  # 가로/세로 척도 비가 벗어나면 기준물 기울어짐 → 강등
 
 _LEVEL_DOWN = {"high": "medium", "medium": "low", "low": "low"}
@@ -397,7 +403,7 @@ def _confidence_level(key: str, spread_cm: float, marker_width_px: float,
         level = "medium"
     else:
         level = "low"
-    if marker_width_px < MIN_MARKER_WIDTH_PX:
+    if not (MIN_MARKER_WIDTH_PX <= marker_width_px <= MAX_MARKER_WIDTH_PX):
         level = _LEVEL_DOWN[level]
     if not (TILT_RATIO_RANGE[0] <= tilt_ratio <= TILT_RATIO_RANGE[1]):
         level = _LEVEL_DOWN[level]

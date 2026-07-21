@@ -20,7 +20,7 @@ export interface ReferenceInfo {
 export interface PhotoCheckResult {
   ready: boolean;           // 모든 조건 충족 → 자동 촬영 가능
   reference: ReferenceInfo; // 검출 결과 (미검출이면 detected:false)
-  markerSizeOk: boolean;    // 마커 크기 충분 (원거리·저해상도 방지)
+  markerSizeOk: boolean;    // 마커 크기 적정 범위 (작음=원거리 노이즈 / 큼=근거리 깊이 편향 방지 — 거리 판정 겸용)
   markerCentered: boolean;  // 마커가 화면 중앙 영역에 위치
   tiltOk: boolean;          // 가로세로 척도 비율이 정면 범위(≈1)
   reasons: string[];        // 불충족 사유 (한국어, 사용자 안내용)

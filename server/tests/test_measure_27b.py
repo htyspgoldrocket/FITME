@@ -42,9 +42,10 @@ HEIGHT_CM = 172.0
 HEIGHT_MM_PER_PX = HEIGHT_CM * 10.0 / 1400.0  # ≈ 1.22857
 
 
-def _marker_ref(width_px: float = 60.0, real_mm: float | None = None) -> dict:
+def _marker_ref(width_px: float = 48.0, real_mm: float | None = None) -> dict:
     """정면(기울기 없음) 정사각 마커 ref. real_mm 기본값은 키 척도와 일치하도록
-    설정 — 두 척도 agreement가 ok가 되는 조건 (마커 60px ≥ MIN_MARKER_WIDTH_PX)."""
+    설정 — 두 척도 agreement가 ok가 되는 조건 (마커 48px = MIN~MAX 밴드 내,
+    2026-07-21 거리 밴드화 반영)."""
     if real_mm is None:
         real_mm = HEIGHT_MM_PER_PX * width_px  # mmPerPx == 키 척도
     x0, y0 = 500.0, 700.0
@@ -174,7 +175,7 @@ def test_statistics_includes_landmarks_for_heatmap():
 
 def test_statistics_suspect_downgrades_all():
     """마커 척도가 키 척도와 20% 이상 어긋나면(suspect) 전 항목 1단계 강등."""
-    ref = _marker_ref(real_mm=50.0)  # mmPerPx 0.833 vs 키 1.229 → r≈1.47
+    ref = _marker_ref(real_mm=40.0)  # mmPerPx 0.833 vs 키 1.229 → r≈1.47
     result = _run_stats(ref, {"heightCm": HEIGHT_CM, "weightKg": None})
     assert result["stats"]["scale"]["agreementLevel"] == "suspect"
     assert any("척도 불일치" in w for w in result["warnings"])

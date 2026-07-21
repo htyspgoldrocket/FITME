@@ -115,7 +115,7 @@ class FitResponse(BaseModel):
 class PhotoCheckResult(BaseModel):
     ready: bool                # 모든 조건 충족 → 자동 촬영 가능
     reference: ReferenceInfo   # 검출 결과 (미검출이면 detected:false)
-    markerSizeOk: bool         # 마커 크기 충분
+    markerSizeOk: bool         # 마커 크기 적정 범위 (거리 판정 겸용)
     markerCentered: bool       # 마커가 화면 중앙 영역에 위치
     tiltOk: bool               # 가로세로 척도 비율이 정면 범위(≈1)
     reasons: list[str]         # 불충족 사유 (한국어, 사용자 안내용)
