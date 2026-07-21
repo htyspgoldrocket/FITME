@@ -469,7 +469,26 @@
     일치 확인) 8/8 통과, 회귀 fit/clothing-spec/clothing-url/profile-flow
     전부 통과 + pytest 162/162. **Phase 5 Step 1·2·3 전부 완료 — 다음은
     5-4(최종 통합 Gate)**
-- **다음 시작 지점: 5-4 — 최종 통합 Gate**
+- **5-4 진행 중 (2026-07-21)** — 최종 통합 Gate. **자동 검증 파트 ✅ 완료**:
+  - **FitResult.imageUrl 배선 (마지막 미충족 계약)**: /fit 서버는 채우지 않음
+    (합성은 온디맨드 /synthesize — VTON 비용) → **합성 성공 시 프론트 App이
+    핏 캐시의 result.imageUrl에 data URL을 채움** (fit·synthesis 캐시가 같은
+    트리거로 무효화되므로 불일치 없음). 검증 관측 지점으로 FitResultView 루트에
+    `data-image-url` 속성 추가, e2e-synthesize에 합성 전 empty→재진입 후
+    filled 검증 2건 확장 (12/12 통과)
+  - **Gate 자동 검증 3항목 근거**: ① 합성 이미지 정상 생성 — 5-1·5-2b·5-2c
+    실호출 3회 산출물(debug_vton_test01~03, 사용자 육안 확인) + E2E 가짜 경로
+    ② 히트맵 FitScore 일치 — e2e-synthesize 픽셀 검증(가슴 loose=파랑 계열
+    확인) ③ FitResult.imageUrl 채워짐 — 위 신규 배선+E2E
+  - **전체 회귀 재확인 (2026-07-21)**: pytest 162/162, tsc+build, dist 번들
+    API 키 grep 청정, E2E 전 스위트 통과 — synthesize 12/12(확장) ·
+    fit 10/10 · analyze 17/17 · clothing-spec 13/13 · clothing-url 11/11 ·
+    profile-flow 14/14 · autoshoot 7/7(실백엔드)
+  - **남은 것**: 수동 검증(합성 육안·히트맵 체감 일치) + 최종 통합 검증
+    (실기기 전 과정 완주 — Phase 2 수동 검증·Phase 3/4 실기기 이월분과
+    한 세션으로 묶어 처리, 아래 통합 체크리스트) + 라이선스 항목(FASHN 교체는
+    출시 전 필수로 유지 — 개발 Gate에서는 "미교체 상태 명시"로 기록)
+- **다음 시작 지점: 5-4 실기기 통합 세션 (수동·통합 검증) → qa Gate 리포트**
 - (아래는 4-2 설계 기록 — 구현 완료됐으나 근거 추적용 보존)
   설계안 요지 (2026-07-18 제시 — 세션 무관 재개용 기록):
   - **알고리즘 2단계**: ① 하한 필터 — 비교 부위 중 tight가 있는 사이즈는

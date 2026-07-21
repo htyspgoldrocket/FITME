@@ -105,6 +105,8 @@ try {
 
   const synthBtn = await page.$('.fit__synth .result__btn--primary');
   check('"가상 착용 이미지 생성" 버튼 표시', synthBtn !== null);
+  const urlBefore = await page.$eval('.fit', (el) => el.dataset.imageUrl);
+  check(`합성 전 FitResult.imageUrl 미채움 (${urlBefore})`, urlBefore === 'empty');
   await page.click('.fit__synth .result__btn--primary');
   // fake 백엔드가 landmarks를 채워 반환하므로(5-3b) <img> 대신 히트맵 <canvas> 렌더
   await page.waitForSelector('.fit__heatmap', { timeout: 15000 });
@@ -139,6 +141,9 @@ try {
   await page.waitForSelector('.fit__heatmap', { timeout: 5000 });
   await new Promise((r) => setTimeout(r, 500));
   check(`재진입 — 재요청 없음 (/synthesize 총 ${synthCalls}회)`, synthCalls === baseline);
+  // 합성 성공이 App의 핏 캐시에 반영됐는지 — FitResult.imageUrl 계약 (Phase 5 Gate)
+  const urlAfter = await page.$eval('.fit', (el) => el.dataset.imageUrl);
+  check(`재진입 후 FitResult.imageUrl 채워짐 (${urlAfter})`, urlAfter === 'filled');
 } catch (e) {
   console.error('FAIL  예외 발생:', e.message);
   failures += 1;

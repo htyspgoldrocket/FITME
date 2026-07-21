@@ -213,7 +213,24 @@ function App() {
         // ok=false는 캐시하지 않음 — 재진입 시 재계산으로 복구 기회
         onLoaded={(r) => setFit(r.ok ? r : null)}
         synthCached={synthesis}
-        onSynthesized={setSynthesis}
+        // 합성 성공 시 핏 캐시의 FitResult.imageUrl도 채운다 (6장 계약 — Phase 5
+        // 합성 이미지). fit과 synthesis는 같은 트리거로 무효화되므로 불일치 없음
+        onSynthesized={(r) => {
+          setSynthesis(r);
+          if (r.ok && r.imageBase64) {
+            setFit((prev) =>
+              prev?.ok && prev.result
+                ? {
+                    ...prev,
+                    result: {
+                      ...prev.result,
+                      imageUrl: `data:image/jpeg;base64,${r.imageBase64}`,
+                    },
+                  }
+                : prev,
+            );
+          }
+        }}
         onBack={() => setScreen('clothing-spec')}
         onRestart={() => setScreen('mode-select')}
       />

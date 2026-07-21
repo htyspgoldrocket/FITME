@@ -41,6 +41,7 @@ def fit_endpoint(req: FitRequest) -> FitResponse:
         recommendedSize=label,
         scores=scores,
         recommendation=feedback["text"],
-        # imageUrl은 Phase 5 몫 (stub 유지 — 규칙 4)
+        # imageUrl은 서버가 채우지 않는다 — 합성은 별도 온디맨드 /synthesize
+        # (VTON 비용)이고, 성공 시 프론트 App이 핏 캐시에 채운다 (5-4)
     )
     return FitResponse(ok=True, result=result, warnings=rec["warnings"])

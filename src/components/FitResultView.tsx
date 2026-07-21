@@ -177,7 +177,9 @@ function FitResultView({
   const { result } = response;
 
   return (
-    <div className="result fit">
+    // data-image-url: FitResult.imageUrl 계약(6장 — Phase 5 합성 이미지) 충족
+    // 여부의 E2E 관측 지점 — imageUrl 자체는 화면에 직접 렌더되지 않는다
+    <div className="result fit" data-image-url={result.imageUrl ? 'filled' : 'empty'}>
       <header className="result__header">
         <h2>핏 분석 결과</h2>
         <p className="result__note">
