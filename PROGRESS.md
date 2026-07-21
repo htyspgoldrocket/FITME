@@ -361,11 +361,20 @@
   - 사용자 준비: replicate.com 가입 → API tokens에서 토큰(r8_…) 발급 →
     `server/.env`에 `REPLICATE_API_TOKEN=r8_…` 줄 추가 (+ Billing 카드 등록).
     키 로더는 utf-8-sig로 읽을 것 (메모장 BOM — 배운 것 18번 재사용)
-- **다음 시작 지점: 5-1 — VTON 단독 테스트 (사용자 API 키 대기 중, 모델
-  cuuupid/idm-vton — 개발용, 상업 사용 금지 라이선스임을 인지하고 진행)**
-  - 재개 시: 키 확인 → person01 사진 + 무신사 상품 이미지 1장으로 합성 1회
-    → 품질 육안 확인 →
-    5-2(백엔드 배선)로
+- **Step 5-1 ✅ 완료 (2026-07-21)** — Replicate `cuuupid/idm-vton` 단독 테스트.
+  `server/scripts/test_vton_standalone.py` 신규(재사용 가능한 1회성 테스트
+  도구, generate_marker.py와 같은 성격). 입력: human_img=person01_v2_aruco.jpg
+  (로컬 파일), garm_img=무신사 996177 티셔츠 이미지 URL(goods-detail API의
+  thumbnailImageUrl, 베이스 도메인 `image.msscdn.net` 확인), category=
+  "upper_body". **버전 미지정 `cuuupid/idm-vton` 호출은 404** — 모델 자체는
+  존재(run_count 150만+)하지만 버전 고정 필요, `cuuupid/idm-vton:0513734a...`
+  (latest_version)로 성공. 결과 `tests/fixtures/debug_vton_test01.jpg` —
+  **사용자 육안 확인 통과** (원본 회색 티셔츠+ArUco 마커 → 무신사 흰 티셔츠로
+  자연스럽게 교체, 얼굴·자세·배경·마커 전부 정상 유지). `replicate>=1.0.7,<2.0`
+  requirements.txt 추가. **5-2 인수인계**: 모델 버전을 하드코딩했음 —
+  Replicate가 모델을 갱신하면 버전이 바뀔 수 있어 5-2에서 버전 관리 방식
+  (고정 vs 동적 조회) 결정 필요
+- **다음 시작 지점: 5-2 — 백엔드 배선 (분해 제시, 사용자 확인 대기)**
 - (아래는 4-2 설계 기록 — 구현 완료됐으나 근거 추적용 보존)
   설계안 요지 (2026-07-18 제시 — 세션 무관 재개용 기록):
   - **알고리즘 2단계**: ① 하한 필터 — 비교 부위 중 tight가 있는 사이즈는

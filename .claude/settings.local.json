@@ -127,7 +127,10 @@
       "WebFetch(domain:huggingface.co)",
       "WebFetch(domain:fashn.ai)",
       "WebFetch(domain:docs.fashn.ai)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "WebFetch(domain:replicate.com)",
+      "Bash(./venv/Scripts/python.exe -c \"import replicate; print\\(replicate.__version__\\)\")",
+      "Bash(./venv/Scripts/python.exe *)"
     ]
   }
 }
