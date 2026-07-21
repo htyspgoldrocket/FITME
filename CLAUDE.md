@@ -418,6 +418,13 @@ export interface FitResponse {
   error?: string;       // ok=false 사유 (한국어 — 예: 비교 가능한 부위 실측 없음)
 }
 
+// ===== /beta 응답 (Phase 6-2 — 베타 게이트 상태 확인, AI 호출 0) =====
+// 프론트 진입 게이트의 UX용 — 실제 강제는 access_guard(6-1)가 AI 라우트에서 수행
+export interface BetaStatus {
+  active: boolean;  // 서버에 베타 코드가 설정돼 있는가 (배포 환경)
+  codeOk: boolean;  // 전달한 코드가 유효한가 (active=false면 항상 true)
+}
+
 // ===== /synthesize 요청·응답 (Phase 5-2c — 합성 실패를 크래시 없이 전달) =====
 // ⚠️ 서버가 쓰는 VTON 모델은 상업 사용 금지 라이선스 — 12장 참조
 export interface SynthesizeRequest {

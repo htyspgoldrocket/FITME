@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routes.analyze import router as analyze_router
+from routes.beta import router as beta_router
 from routes.check_photo import router as check_photo_router
 from routes.clothing import router as clothing_router
 from routes.fit import router as fit_router
@@ -28,6 +29,7 @@ app.add_middleware(
 )
 
 app.include_router(analyze_router)
+app.include_router(beta_router)
 app.include_router(check_photo_router)
 app.include_router(clothing_router)
 app.include_router(fit_router)

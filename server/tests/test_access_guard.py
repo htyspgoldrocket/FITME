@@ -134,3 +134,26 @@ def test_health_not_guarded(monkeypatch):
     """비용 없는 라우트(/health)는 코드 없이도 열려 있다."""
     monkeypatch.setenv("FITME_BETA_CODE", "fitme2026")
     assert client.get("/health").status_code == 200
+
+
+# ---------- GET /beta (6-2 — 게이트 상태) ----------
+
+
+def test_beta_inactive(monkeypatch):
+    monkeypatch.delenv("FITME_BETA_CODE", raising=False)
+    res = client.get("/beta")
+    assert res.status_code == 200
+    assert res.json() == {"active": False, "codeOk": True}
+
+
+def test_beta_active_wrong_or_missing_code(monkeypatch):
+    monkeypatch.setenv("FITME_BETA_CODE", "fitme2026")
+    assert client.get("/beta").json() == {"active": True, "codeOk": False}
+    res = client.get("/beta", headers={"X-Beta-Code": "wrong"})
+    assert res.json() == {"active": True, "codeOk": False}
+
+
+def test_beta_active_correct_code(monkeypatch):
+    monkeypatch.setenv("FITME_BETA_CODE", "fitme2026")
+    res = client.get("/beta", headers={"X-Beta-Code": "fitme2026"})
+    assert res.json() == {"active": True, "codeOk": True}

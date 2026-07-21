@@ -195,3 +195,9 @@ class SynthesizeResponse(BaseModel):
     code: Optional[
         Literal["no-garment-image", "no-token", "unsupported-category", "synthesis-failed"]
     ] = None
+
+
+# ===== /beta 응답 (Phase 6-2 — 베타 게이트 상태, AI 호출 0·카운트 0) =====
+class BetaStatusResponse(BaseModel):
+    active: bool  # 서버에 FITME_BETA_CODE가 설정돼 있는가
+    codeOk: bool  # 전달된 X-Beta-Code가 유효한가 (active=False면 항상 True)

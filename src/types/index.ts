@@ -158,6 +158,12 @@ export interface SynthesizeRequest {
   clothing: ClothingSpec;     // imageUrl·category 사용 (imageUrl 없으면 ok=false)
 }
 
+// ===== /beta 응답 (Phase 6-2 — 베타 게이트 상태 확인, AI 호출 0) =====
+export interface BetaStatus {
+  active: boolean;  // 서버에 베타 코드가 설정돼 있는가 (배포 환경)
+  codeOk: boolean;  // 전달한 코드가 유효한가 (active=false면 항상 true)
+}
+
 export interface SynthesizeResponse {
   ok: boolean;
   imageBase64?: string;  // 합성 결과 (data: 프리픽스 제외, ok=true일 때만)
