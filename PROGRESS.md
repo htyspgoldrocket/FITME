@@ -385,7 +385,21 @@
     검증: pytest 3건 신규(절대/상대 경로 변환, 누락 시 미포함) 전체 141/141 +
     tsc 통과, 실상품(996177) end-to-end 확인(scrape→normalize→Pydantic 검증
     까지 URL 일치, 5-1에서 쓴 이미지와 동일 URL 재확인)
-- **다음 시작 지점: 5-2b — VTON 서비스 모듈화**
+  - **5-2b ✅ 완료**: `services/vton.py` 신규 — 5-1 스크립트 로직을 재사용
+    가능한 `synthesize(human_image, garment_image_url, clothing_category,
+    garment_des="") -> bytes`로 정리. **버전 관리**: `MODEL_VERSION` 상수로
+    고정(동적 조회는 매 호출 API 1회 추가라 기각) — 코드 주석에 "실패 시
+    replicate.com에서 최신 버전 확인 후 교체" 안내. **category 매핑**:
+    `CATEGORY_MAP`으로 ClothingSpec.category('top'/'outer'→upper_body,
+    'bottom'→lower_body, 'dress'→dresses) 변환, 미지원 종류는 API 호출 전
+    `VtonError(unsupported-category)`로 즉시 차단. 에러는 `ClothingScrapeError`
+    와 같은 패턴(code+한국어 message)의 `VtonError`로 통일(no-token/
+    unsupported-category/synthesis-failed). 검증: pytest 13건 신규(category
+    매핑 4종+미지원, 성공 경로 입력 필드 확인, garment_des 전달, API 예외
+    래핑, 빈 출력, 토큰 없음, _extract_bytes 분기) 전체 154/154 + tsc,
+    **실호출 1회**로 모듈 동작 재확인(`debug_vton_test02_module.jpg` 61.5KB —
+    5-1과 동일 이미지 조합, 크기 유사해 정상 확인)
+- **다음 시작 지점: 5-2c — POST /synthesize 백엔드 라우트**
 - (아래는 4-2 설계 기록 — 구현 완료됐으나 근거 추적용 보존)
   설계안 요지 (2026-07-18 제시 — 세션 무관 재개용 기록):
   - **알고리즘 2단계**: ① 하한 필터 — 비교 부위 중 tight가 있는 사이즈는
