@@ -334,6 +334,20 @@ function CameraView({
               rx="1.5"
             />
           )}
+          {/* 5-4 백로그 ④ — 거리 자: 머리·발을 선에 맞추면 약 2m. 층위 3
+              판정(마커 픽셀 밴드) 이전의 예방 층 — 1차 실기기에서 근거리
+              접근이 A파트 실패 주범. viewBox 좌표라 화면 비율과 무관하게
+              실루엣 머리(y=2)·발(y=186)에 정확히 붙는다 */}
+          <line className="camera__ruler-line" x1="2" y1="2" x2="98" y2="2" />
+          <line className="camera__ruler-line" x1="2" y1="186" x2="98" y2="186" />
+          <text className="camera__ruler-text" x="98" y="8" textAnchor="end">
+            머리를 이 선에
+          </text>
+          {/* 발 라벨은 선보다 위(y=170) — 하단 고정 토글·배너(camera__status,
+              bottom 118px)와 겹치지 않게. ↓로 아래 선을 가리킨다 */}
+          <text className="camera__ruler-text" x="98" y="170" textAnchor="end">
+            ↓ 발을 이 선에 — 약 2m
+          </text>
         </svg>
         <div
           className={

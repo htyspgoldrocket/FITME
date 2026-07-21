@@ -71,6 +71,14 @@ try {
   // 6) 층위 2 — 실루엣 가이드 표시
   check('실루엣 가이드 표시', (await page.$('.camera__silhouette')) !== null);
 
+  // 6a) 5-4 백로그 ④ — 거리 자: 머리·발 기준선 2개 + 2m 안내 라벨 (SVG 내부)
+  const rulerCount = (await page.$$('.camera__ruler-line')).length;
+  check(`거리 자 기준선 2개 표시 (실제 ${rulerCount})`, rulerCount === 2);
+  const rulerLabels = await page.$$eval('.camera__ruler-text', (els) =>
+    els.map((el) => el.textContent.trim()).join(' / '),
+  );
+  check(`거리 자 라벨에 2m 안내 (${rulerLabels})`, rulerLabels.includes('약 2m'));
+
   // 6b) 5-4 백로그 ⑤ — 간편 모드: 가로 카드 박스 + 방향·대비 안내 문구
   check('간편 모드 카드 박스 표시', (await page.$('.camera__card-box')) !== null);
   const refText = await page.$eval('.camera__ref-guide', (el) => el.textContent);

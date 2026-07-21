@@ -280,6 +280,23 @@ body {
   top: 28.5%;
 }
 
+/* 5-4 백로그 ④ — 거리 자 (실루엣 SVG 내부, viewBox 좌표). 노랑 —
+   실루엣 흰 점선·카드 박스 초록과 구분 */
+.camera__ruler-line {
+  fill: none;
+  stroke: rgba(250, 204, 21, 0.85);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+
+.camera__ruler-text {
+  fill: rgba(250, 204, 21, 0.95);
+  font-size: 5.5px; /* viewBox 단위 — 화면에서 실루엣 크기에 비례 */
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.65);
+  stroke-width: 0.9;
+}
+
 .camera__top {
   position: absolute;
   top: 0;
