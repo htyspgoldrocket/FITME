@@ -399,7 +399,22 @@
     래핑, 빈 출력, 토큰 없음, _extract_bytes 분기) 전체 154/154 + tsc,
     **실호출 1회**로 모듈 동작 재확인(`debug_vton_test02_module.jpg` 61.5KB —
     5-1과 동일 이미지 조합, 크기 유사해 정상 확인)
-- **다음 시작 지점: 5-2c — POST /synthesize 백엔드 라우트**
+  - **5-2c ✅ 완료 (2026-07-21) → Step 5-2 전체 완료**: 백엔드 `POST /synthesize`
+    — `routes/synthesize.py`(def 엔드포인트 — replicate 클라이언트가 동기
+    HTTP, clothing.py의 Playwright와 같은 이유로 threadpool 필요, 배운 것
+    4번 재사용) + **신규 계약 `SynthesizeRequest/SynthesizeResponse`**
+    (ok/imageBase64?/error?/code? — 합성 실패를 크래시 없이 한국어로 전달,
+    AnalyzeResponse 방식. CLAUDE.md 6장→types/index.ts→schemas.py 동기화).
+    `ClothingSpec.imageUrl` 없으면 VTON 호출 전에 `no-garment-image`로 즉시
+    차단(비용 0) + 사진 base64 손상 시 `synthesis-failed`. main.py 라우터
+    등록, `/health` phase 5-2c로 갱신.
+    검증: pytest 5건 신규(성공 경로 필드 전달·garment_des=productName 확인/
+    이미지 없음 단락·API 미호출/잘못된 base64/VtonError 코드 그대로 전파/
+    422) 전체 159/159 + tsc, **실서버 통짜 1회**(TestClient 경유, person01_v2
+    사진 + 무신사 996177 실제 imageUrl) — ok:true, `debug_vton_test03_route.jpg`
+    61.6KB, 5-1·5-2b 결과와 동일 품질 육안 재확인. **Phase 5 Step 1·2 완료 —
+    다음은 5-3(히트맵+프론트 배선)**
+- **다음 시작 지점: 5-3 — 핏 히트맵 오버레이 + 프론트 배선**
 - (아래는 4-2 설계 기록 — 구현 완료됐으나 근거 추적용 보존)
   설계안 요지 (2026-07-18 제시 — 세션 무관 재개용 기록):
   - **알고리즘 2단계**: ① 하한 필터 — 비교 부위 중 tight가 있는 사이즈는

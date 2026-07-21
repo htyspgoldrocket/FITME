@@ -11,6 +11,7 @@ from routes.analyze import router as analyze_router
 from routes.check_photo import router as check_photo_router
 from routes.clothing import router as clothing_router
 from routes.fit import router as fit_router
+from routes.synthesize import router as synthesize_router
 
 app = FastAPI(title="FITME API", version="0.2.0")
 
@@ -30,9 +31,10 @@ app.include_router(analyze_router)
 app.include_router(check_photo_router)
 app.include_router(clothing_router)
 app.include_router(fit_router)
+app.include_router(synthesize_router)
 
 
 @app.get("/health")
 def health() -> dict[str, str]:
     """서버 기동 확인용."""
-    return {"status": "ok", "phase": "4-4"}
+    return {"status": "ok", "phase": "5-2c"}

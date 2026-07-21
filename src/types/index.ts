@@ -140,3 +140,17 @@ export interface FitResponse {
   warnings: string[];   // insufficient(A안)·estimated·신뢰도 등 경고 (한국어)
   error?: string;       // ok=false 사유 (한국어 — 예: 비교 가능한 부위 실측 없음)
 }
+
+// ===== /synthesize 요청·응답 (Phase 5-2c — 합성 실패를 크래시 없이 전달) =====
+// ⚠️ 서버가 쓰는 VTON 모델은 상업 사용 금지 라이선스 — CLAUDE.md 12장 참조
+export interface SynthesizeRequest {
+  humanImage: CapturedImage;  // 사용자 촬영 사진
+  clothing: ClothingSpec;     // imageUrl·category 사용 (imageUrl 없으면 ok=false)
+}
+
+export interface SynthesizeResponse {
+  ok: boolean;
+  imageBase64?: string;  // 합성 결과 (data: 프리픽스 제외, ok=true일 때만)
+  error?: string;        // ok=false 사유 (한국어)
+  code?: 'no-garment-image' | 'no-token' | 'unsupported-category' | 'synthesis-failed';
+}
