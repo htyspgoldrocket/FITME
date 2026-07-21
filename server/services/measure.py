@@ -325,6 +325,34 @@ def check_symmetry(landmarks: dict) -> list[str]:
     return warnings
 
 
+# 히트맵 오버레이 위치용 (5-3b) — FitScore.part 이름과 1:1 대응
+_PART_LANDMARK_PAIRS = {
+    "chest": ("chest_left", "chest_right"),
+    "waist": ("waist_left", "waist_right"),
+    "hip": ("hip_left", "hip_right"),
+    "shoulder": ("left_shoulder", "right_shoulder"),
+}
+
+
+def landmarks_by_part(median_landmarks: dict) -> dict:
+    """부위별 대표 랜드마크(왼쪽 x·오른쪽 x·평균 y) — 히트맵 오버레이 위치용 (5-3b).
+
+    좌표는 median_landmarks와 동일 좌표계(촬영 사진 픽셀) 그대로 반환한다.
+    """
+    result: dict[str, dict[str, float]] = {}
+    for part, (left_key, right_key) in _PART_LANDMARK_PAIRS.items():
+        if left_key not in median_landmarks or right_key not in median_landmarks:
+            continue
+        lx, ly = median_landmarks[left_key]
+        rx, ry = median_landmarks[right_key]
+        result[part] = {
+            "leftX": round(lx, 1),
+            "rightX": round(rx, 1),
+            "y": round((ly + ry) / 2.0, 1),
+        }
+    return result
+
+
 def median_and_stable_spread(runs_values: list[dict]) -> tuple[dict, dict]:
     """반복 측정값 → (항목별 중앙값, 신뢰도용 편차).
 
@@ -488,6 +516,7 @@ def measure_with_statistics(
             "spreadCm": {k: round(v, 2) for k, v in spread.items()},
             "scale": stats_scale,
         },
+        "landmarks": landmarks_by_part(median_landmarks),
     }
 
 

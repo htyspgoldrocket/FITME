@@ -92,4 +92,5 @@ def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
         measurements=result["measurements"],
         warnings=warnings,
         stats=result["stats"],
+        landmarks=result["landmarks"],
     )

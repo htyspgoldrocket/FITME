@@ -436,7 +436,24 @@
     14/14(profile)·7/7(autoshoot, 실백엔드 사전 기동 필요 — 배운 것 6번대로
     실백엔드로 재확인해 정상, 가짜 백엔드로 돌리면 배너 셀렉터 타임아웃은
     기존에 문서화된 전제조건 미충족일 뿐 회귀 아님) + pytest 159/159
-- **다음 시작 지점: 5-3b — 랜드마크 픽셀 좌표 노출 (AnalyzeResponse 계약 확장)**
+  - **5-3b ✅ 완료**: `measure.py`에 `landmarks_by_part()` 신규 — 기존에
+    대칭성 검사에만 쓰고 버리던 `median_landmarks`에서 4부위(chest/waist/
+    hip/shoulder)의 좌·우 x + 평균 y를 뽑아 `measure_with_statistics()`
+    반환에 `landmarks` 키로 추가. **신규 계약** `PartLandmark`
+    (leftX/rightX/y) + `AnalyzeResponse.landmarks?`(CLAUDE.md 6장→
+    types/index.ts→schemas.py 동기화). `routes/analyze.py`가 그대로 전달.
+    **프레이밍 전제 확인(5-1·5-2 산출물로 검증)**: person01_v2 원본
+    1080×1440 vs VTON 출력 3종 전부 768×1024 — 종횡비 동일(0.75), 크롭 없이
+    균등 축소만 있음 확인. 따라서 좌표는 원본 기준으로 반환하고, 프론트가
+    (합성 이미지 실제 크기/원본 크기) 배율로 스케일링(5-3d 몫) — 좌표계 자체를
+    복잡하게 만들지 않음.
+    검증: pytest 3건 신규(4부위 좌우 평균 정확성, 랜드마크 쌍 없으면 해당
+    부위 제외 — 가짜 좌표 금지, 파이프라인 통합 확인) + 기존 analyze 라우트
+    테스트에 landmarks 응답 검증 추가, 전체 162/162 + tsc, **실사진
+    데이터**(person01_v2 랜드마크 캐시, API 0회)로 합리적 픽셀값 확인
+    (shoulder y=582.5→hip y=929, 프레임 내 순서·비율 상식적). E2E 회귀
+    analyze/fit/synthesize/clothing-url 전부 통과, build 통과
+- **다음 시작 지점: 5-3d — 히트맵 오버레이 (Canvas)**
 - (아래는 4-2 설계 기록 — 구현 완료됐으나 근거 추적용 보존)
   설계안 요지 (2026-07-18 제시 — 세션 무관 재개용 기록):
   - **알고리즘 2단계**: ① 하한 필터 — 비교 부위 중 tight가 있는 사이즈는

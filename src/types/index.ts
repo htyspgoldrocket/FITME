@@ -64,6 +64,15 @@ export interface AnalyzeStats {
   scale: Record<string, number | string>;  // 사용 척도 요약 (역추적용)
 }
 
+// 부위별 대표 랜드마크 (5-3b — 히트맵 오버레이 위치 계산용). 좌표는 촬영 사진
+// (CapturedImage.width×height) 기준 픽셀 — 합성 이미지는 종횡비를 유지한 채
+// 리사이즈되므로, 프론트가 (합성 이미지 실제 크기 / 원본 크기) 배율로 스케일링해 사용한다.
+export interface PartLandmark {
+  leftX: number;   // 왼쪽 가장자리 x (px)
+  rightX: number;  // 오른쪽 가장자리 x (px)
+  y: number;       // 높이 (좌우 y 평균, px)
+}
+
 export interface AnalyzeResponse {
   ok: boolean;                     // 측정 성공 여부
   reference: ReferenceInfo;        // 기준물 검출 결과 (미검출이면 detected:false)
@@ -71,6 +80,7 @@ export interface AnalyzeResponse {
   warnings: string[];              // 범위·해부학·척도·대칭 경고 (한국어)
   stats?: AnalyzeStats;            // ok=true일 때만 존재
   error?: string;                  // ok=false 사유 (한국어, 재촬영 안내용)
+  landmarks?: Record<'chest' | 'waist' | 'hip' | 'shoulder', PartLandmark>; // ok=true일 때만 (5-3b)
 }
 
 // ===== 의류 스펙 (Phase 3 산출물) =====

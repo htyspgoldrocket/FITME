@@ -159,6 +159,10 @@ def test_analyze_precise_full_pipeline(monkeypatch):
     assert set(stats["spreadCm"]) == set(MEASUREMENT_FIELDS)
     assert isinstance(data["warnings"], list)
 
+    # 5-3b: 히트맵 오버레이용 부위별 랜드마크가 응답에 포함된다
+    assert set(data["landmarks"].keys()) == {"chest", "waist", "hip", "shoulder"}
+    assert data["landmarks"]["chest"] == {"leftX": 390.0, "rightX": 610.0, "y": 400.0}
+
 
 def test_analyze_without_profile_uses_marker_scale(monkeypatch):
     """profile 없으면 마커 스칼라 폴백 (2-8 UI 연결 전 규격 불파손)."""

@@ -142,6 +142,14 @@ class AnalyzeStats(BaseModel):
     scale: dict[str, float | str]    # 사용 척도 요약 (역추적용 — measure.py stats.scale)
 
 
+class PartLandmark(BaseModel):
+    """부위별 대표 랜드마크 (5-3b — 히트맵 오버레이 위치 계산용, 촬영 사진 픽셀 좌표)."""
+
+    leftX: float
+    rightX: float
+    y: float
+
+
 class AnalyzeResponse(BaseModel):
     ok: bool                                          # 측정 성공 여부
     reference: ReferenceInfo                          # 검출 결과 (미검출: detected=False)
@@ -149,6 +157,9 @@ class AnalyzeResponse(BaseModel):
     warnings: list[str] = []                          # 범위·해부학·척도·대칭 경고 (한국어)
     stats: Optional[AnalyzeStats] = None              # ok=True일 때만
     error: Optional[str] = None                       # ok=False 사유 (한국어, 재촬영 안내)
+    landmarks: Optional[
+        dict[Literal["chest", "waist", "hip", "shoulder"], PartLandmark]
+    ] = None                                          # ok=True일 때만 (5-3b)
 
 
 # ===== /check-photo 요청 (2-7c) =====

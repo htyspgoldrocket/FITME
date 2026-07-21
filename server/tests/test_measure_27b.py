@@ -12,6 +12,7 @@ from services.measure import (
     check_scale_agreement,
     compute_scale,
     height_scale_from_runs,
+    landmarks_by_part,
     landmarks_to_measurements,
     measure_with_statistics,
     scalar_distance_mm,
@@ -141,6 +142,34 @@ def test_statistics_with_profile_ok():
     assert result["stats"]["scale"]["agreementLevel"] == "ok"
     assert result["measurements"]["height"] == pytest.approx(HEIGHT_CM, abs=0.05)
     assert result["measurements"]["confidence"]["height"] == "high"
+
+
+# ---------- 7) 5-3b: 히트맵용 부위별 랜드마크 ----------
+
+def test_landmarks_by_part_averages_left_right():
+    """chest/waist/hip/shoulder 4부위 — 왼쪽·오른쪽 x와 평균 y를 그대로 반환."""
+    result = landmarks_by_part(BASE_LANDMARKS)
+    assert result == {
+        "chest": {"leftX": 390.0, "rightX": 610.0, "y": 400.0},
+        "waist": {"leftX": 400.0, "rightX": 600.0, "y": 600.0},
+        "hip": {"leftX": 395.0, "rightX": 605.0, "y": 750.0},
+        "shoulder": {"leftX": 350.0, "rightX": 650.0, "y": 300.0},
+    }
+
+
+def test_landmarks_by_part_skips_missing_pair():
+    """랜드마크 쌍이 없으면 해당 부위를 결과에서 제외한다 (가짜 좌표 금지, 규칙 1)."""
+    partial = {k: v for k, v in BASE_LANDMARKS.items() if not k.startswith("waist")}
+    result = landmarks_by_part(partial)
+    assert "waist" not in result
+    assert set(result.keys()) == {"chest", "hip", "shoulder"}
+
+
+def test_statistics_includes_landmarks_for_heatmap():
+    """measure_with_statistics 반환에 5-3b landmarks가 포함된다."""
+    result = _run_stats(_marker_ref(), {"heightCm": HEIGHT_CM, "weightKg": None})
+    assert result["landmarks"]["chest"] == {"leftX": 390.0, "rightX": 610.0, "y": 400.0}
+    assert set(result["landmarks"].keys()) == {"chest", "waist", "hip", "shoulder"}
 
 
 def test_statistics_suspect_downgrades_all():
