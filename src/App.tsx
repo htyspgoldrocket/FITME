@@ -57,6 +57,9 @@ function App() {
   const [guideSeen, setGuideSeen] = useState(false);
   // 층위 3 자동 촬영(2-8d) — 기본 ON, 재촬영 후에도 선택 유지
   const [autoShoot, setAutoShoot] = useState(true);
+  // 음성 안내(5-4 개선 ②) — 사용자가 카메라에서 2m 떨어져 배너를 읽을 수 없어
+  // 판정 사유를 TTS로 읽어준다. autoShoot과 같은 이유로 App이 보관
+  const [voiceGuide, setVoiceGuide] = useState(true);
   // 전/후면 선택 — 재촬영으로 카메라에 재진입해도 유지
   const [facing, setFacing] = useState<CameraFacing>('environment');
   // 셔터 타이머 — facing과 동일하게 재진입해도 유지
@@ -124,6 +127,8 @@ function App() {
         onDismissGuide={() => setGuideSeen(true)}
         autoShoot={autoShoot}
         onToggleAutoShoot={() => setAutoShoot((v) => !v)}
+        voiceGuide={voiceGuide}
+        onToggleVoiceGuide={() => setVoiceGuide((v) => !v)}
         capturing={capturing}
       />
     );

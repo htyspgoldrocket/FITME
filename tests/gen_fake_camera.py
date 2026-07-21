@@ -26,7 +26,10 @@ import cv2  # noqa: E402
 from services.reference_detect import ARUCO_DICT_ID, MARKER_ID  # noqa: E402
 
 W, H = 1080, 1440        # native CapturedImage size -> capture resize is a no-op
-SIDE = 48                # marker side px, inside MIN/MAX_MARKER_WIDTH_PX (40-55)
+SIDE = 42                # marker side px, inside MIN/MAX_MARKER_WIDTH_PX (40-55).
+# 42 also keeps the e2e-analyze "suspect" scenario alive: fake landmarks are
+# head-heel 1400px with heightCm=172 (body 1.2286 mm/px) vs marker 70mm/42px
+# (1.667 mm/px) -> r = 0.74, >20% mismatch -> retake recommendation banner.
 MARGIN = 24              # white quiet zone (required for detection)
 FRAMES = 3               # Chrome loops the file
 OUT = ROOT / "tests" / "fake-marker.y4m"

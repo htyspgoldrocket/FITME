@@ -60,6 +60,13 @@ async function driveToCamera(page) {
     const text = await page.$eval('.camera__banner--warn', (el) => el.textContent);
     check(`미검출 사유 배너 표시 ("${text.slice(0, 20)}…")`, text.includes('마커'));
 
+    // 5-4 ② — 원거리 인지: 미충족 상태 테두리(빨강) + 음성 토글 노출
+    check('미충족 상태 테두리(warn) 표시', (await page.$('.camera__edge--warn')) !== null);
+    const voiceBtn = await page.$$eval('.camera__auto', (els) =>
+      els.map((el) => el.textContent).find((t) => t.includes('음성')),
+    );
+    check(`음성 안내 토글 표시 (기본 ON: "${voiceBtn}")`, /음성 ON/.test(voiceBtn ?? ''));
+
     // 8초 더 관찰 — 자동 카운트다운·촬영이 일어나면 안 됨
     await new Promise((r) => setTimeout(r, 8000));
     check('마커 없으면 자동 촬영 안 함 (카메라 화면 유지)', (await page.$('.camera')) !== null);
@@ -92,6 +99,7 @@ async function driveToCamera(page) {
 
       await page.waitForSelector('.camera__banner--ok', { timeout: 15000 });
       check('조건 충족 배너(ready) 표시', true);
+      check('충족 상태 테두리(ok) 표시', (await page.$('.camera__edge--ok')) !== null);
 
       // 셔터를 탭하지 않고 자동으로 미리보기까지 진입해야 함
       await page.waitForSelector('.preview', { timeout: 20000 });

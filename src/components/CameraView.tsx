@@ -23,6 +23,20 @@ const AUTO_COUNTDOWN_SEC = 3; // 조건 충족 시 자동 촬영 카운트다운
 const READY_STREAK_TO_SHOOT = 2; // 연속 ready 판정 수 — 일시적 통과(깜빡임) 오발사 방지
 const CANCEL_COOLDOWN_MS = 8000; // 사용자가 자동 카운트다운을 취소하면 잠시 재발동 억제
 
+// ===== 5-4 개선 ② — 원거리 인지: 사용자는 카메라에서 2m 떨어져 있어
+// 배너 글씨를 읽을 수 없다. 판정 사유를 TTS로 읽어주고, 화면 전체 테두리
+// 색(빨강=미충족/초록=ready)으로 멀리서도 상태를 알 수 있게 한다.
+const RESPEAK_INTERVAL_MS = 7000; // 같은 안내를 다시 읽어주기까지의 간격 (잔소리 방지)
+
+function speak(text: string) {
+  if (!('speechSynthesis' in window)) return; // 미지원 브라우저 — 시각 안내만
+  window.speechSynthesis.cancel(); // 밀린 안내가 쌓여 뒤늦게 읽히는 것 방지
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ko-KR';
+  u.rate = 1.05;
+  window.speechSynthesis.speak(u);
+}
+
 interface CameraViewProps {
   mode: MeasurementMode;
   /** 전면/후면 선택 — 재촬영 등 화면 전환 후에도 유지되도록 App이 보관 */
@@ -40,6 +54,9 @@ interface CameraViewProps {
   /** 층위 3 자동 촬영(2-8d) — 재촬영 후에도 유지되도록 App이 보관 */
   autoShoot: boolean;
   onToggleAutoShoot: () => void;
+  /** 음성 안내(5-4 ②) — 원거리에서 배너 대신 판정 사유를 읽어준다. App이 보관 */
+  voiceGuide: boolean;
+  onToggleVoiceGuide: () => void;
   /** 다중 프레임 캡처 진행 중(2-8e) — 셔터 잠금 + 정지 안내 + 폴링 일시정지 */
   capturing: boolean;
 }
@@ -66,6 +83,8 @@ function CameraView({
   onDismissGuide,
   autoShoot,
   onToggleAutoShoot,
+  voiceGuide,
+  onToggleVoiceGuide,
   capturing,
 }: CameraViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -87,6 +106,30 @@ function CameraView({
   const [ready, setReady] = useState(false);
   // 타이머 카운트다운 남은 초 (null = 카운트다운 아님)
   const [countdown, setCountdown] = useState<number | null>(null);
+
+  // 음성 안내(5-4 ②) — 폴링 클로저에서 최신 토글값을 보도록 ref 미러 + 중복 발화 억제
+  const voiceOnRef = useRef(voiceGuide);
+  const lastSpoken = useRef<{ text: string; at: number }>({ text: '', at: 0 });
+  useEffect(() => {
+    voiceOnRef.current = voiceGuide;
+    if (!voiceGuide && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+  }, [voiceGuide]);
+  // 화면 이탈 시 읽던 안내 즉시 중단
+  useEffect(
+    () => () => {
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    },
+    [],
+  );
+  const speakGuidance = (text: string) => {
+    if (!voiceOnRef.current) return;
+    const now = Date.now();
+    if (lastSpoken.current.text === text && now - lastSpoken.current.at < RESPEAK_INTERVAL_MS) {
+      return;
+    }
+    lastSpoken.current = { text, at: now };
+    speak(text);
+  };
 
   // 카메라 시작/정지 (방향 전환 시 스트림 재시작)
   useEffect(() => {
@@ -140,6 +183,7 @@ function CameraView({
       if (videoRef.current) onShutter(videoRef.current);
       return;
     }
+    if (voiceOnRef.current) speak(String(countdown)); // 원거리 카운트다운 안내
     const id = window.setTimeout(() => setCountdown(countdown - 1), 1000);
     return () => window.clearTimeout(id);
   }, [countdown, onShutter]);
@@ -161,6 +205,9 @@ function CameraView({
           if (stopped) return;
           setServerDown(false);
           setCheck(result);
+          // 원거리 음성 안내 — ready면 유지 안내, 아니면 첫 번째 사유를 읽어준다
+          if (result.ready) speakGuidance('좋아요! 그대로 계세요');
+          else if (result.reasons.length > 0) speakGuidance(result.reasons[0]);
           if (result.ready) {
             readyStreak.current += 1;
             if (
@@ -246,6 +293,14 @@ function CameraView({
           'camera__video' + (facing === 'user' ? ' camera__video--mirrored' : '')
         }
       />
+
+      {/* 5-4 ② — 원거리(2m)에서도 보이는 판정 상태 테두리 (빨강=미충족/초록=ready) */}
+      {!guideOpen && autoShoot && !serverDown && check !== null && (
+        <div
+          className={'camera__edge camera__edge--' + (check.ready ? 'ok' : 'warn')}
+          aria-hidden="true"
+        />
+      )}
 
       {/* 층위 2 — 정중앙 실루엣 가이드 (광각 가장자리 회피) + 기준물 위치 */}
       <div className="camera__overlay" aria-hidden="true">
@@ -359,6 +414,13 @@ function CameraView({
             onClick={onToggleAutoShoot}
           >
             자동 촬영 {autoShoot ? 'ON' : 'OFF'}
+          </button>
+          <button
+            type="button"
+            className={'camera__auto' + (voiceGuide ? ' camera__auto--on' : '')}
+            onClick={onToggleVoiceGuide}
+          >
+            🔊 음성 {voiceGuide ? 'ON' : 'OFF'}
           </button>
           {autoShoot && (
             <span
