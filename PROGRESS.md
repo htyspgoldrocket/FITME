@@ -453,7 +453,23 @@
     데이터**(person01_v2 랜드마크 캐시, API 0회)로 합리적 픽셀값 확인
     (shoulder y=582.5→hip y=929, 프레임 내 순서·비율 상식적). E2E 회귀
     analyze/fit/synthesize/clothing-url 전부 통과, build 통과
-- **다음 시작 지점: 5-3d — 히트맵 오버레이 (Canvas)**
+  - **5-3d ✅ 완료 → Step 5-3 전체 완료**: `components/FitHeatmap.tsx` 신규
+    — Canvas에 합성 이미지를 그린 뒤, `FitScore.part`별로 5-3b 랜드마크를
+    (합성 이미지 실제 크기/원본 크기) 배율로 스케일링해 반투명 색상 밴드
+    (tight=빨강/good=초록/loose=파랑, 기존 `fit__status` 배지와 동일 색
+    계열) + 수치 라벨("가슴 +2.3cm" 등, 07-20 결정 반영) 오버레이.
+    `landmarks` 없으면(오래된 캐시 등) 기존 일반 `<img>`로 폴백 — 크래시
+    없이 정직하게 대체 표시. FitResultView가 `image`(원본 크기 기준)·
+    `landmarks`(App→analysis에서 전파)를 새로 받아 배선.
+    검증: tsc+build+dist 번들 API 키 grep 청정, **E2E 픽셀 검증**
+    (`e2e-synthesize.mjs` 확장 — 가짜 백엔드 합성 이미지를 1x1 대신 원본과
+    종횡비 동일한 270×360 단색 JPEG로 교체(Pillow), 밴드 중심 픽셀이
+    배경과 다름을 실제로 확인해 "스케일링·배치 로직이 그렸다"를 렌더 여부가
+    아니라 픽셀 색으로 검증 — 가슴 밴드가 파랑 계열로 나와 loose 판정과
+    일치 확인) 8/8 통과, 회귀 fit/clothing-spec/clothing-url/profile-flow
+    전부 통과 + pytest 162/162. **Phase 5 Step 1·2·3 전부 완료 — 다음은
+    5-4(최종 통합 Gate)**
+- **다음 시작 지점: 5-4 — 최종 통합 Gate**
 - (아래는 4-2 설계 기록 — 구현 완료됐으나 근거 추적용 보존)
   설계안 요지 (2026-07-18 제시 — 세션 무관 재개용 기록):
   - **알고리즘 2단계**: ① 하한 필터 — 비교 부위 중 tight가 있는 사이즈는

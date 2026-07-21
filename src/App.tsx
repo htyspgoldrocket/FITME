@@ -207,6 +207,7 @@ function App() {
       <FitResultView
         image={image}
         measurements={analysis.measurements}
+        landmarks={analysis.landmarks}
         spec={clothing.spec}
         cached={fit}
         // ok=false는 캐시하지 않음 — 재진입 시 재계산으로 복구 기회

@@ -104,18 +104,29 @@ fit_route.generate_feedback = (
 # --- synthesize (5-2c/5-3c): replace only the VTON call -- route logic
 # (imageUrl 검증, base64 디코딩) runs for real, zero Replicate cost.
 import base64  # noqa: E402
+import io  # noqa: E402
 
 import routes.synthesize as synthesize_route  # noqa: E402
 
-# 1x1 흰색 JPEG (실제 <img> 렌더 확인용 — 유효한 최소 JPEG)
-_FAKE_SYNTH_JPEG = base64.b64decode(
-    "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgK"
-    "CgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/2wBDAQMDAwQDBAgEBAgQCwkL"
-    "EBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/wAAR"
-    "CAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAA"
-    "AAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oA"
-    "DAMBAAIRAxEAPwCdABmX/9k="
-)
+# 5-3d: 히트맵 밴드 위치를 실제로 검증하려면 1x1이 아닌, 원본과 종횡비가 같은
+# (0.75 = 1080/1440, 5-3b에서 확인한 VTON 실측과 동일 비율) 단색 이미지가 필요하다
+# (E2E가 스케일된 좌표에 밴드가 그려졌는지 픽셀로 확인, tests/e2e-synthesize.mjs).
+try:
+    from PIL import Image
+
+    _buf = io.BytesIO()
+    Image.new("RGB", (270, 360), color=(128, 128, 128)).save(_buf, format="JPEG")
+    _FAKE_SYNTH_JPEG = _buf.getvalue()
+except ImportError:
+    # Pillow 없으면 1x1 최소 JPEG로 폴백 (렌더 여부만 확인 가능)
+    _FAKE_SYNTH_JPEG = base64.b64decode(
+        "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgK"
+        "CgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/2wBDAQMDAwQDBAgEBAgQCwkL"
+        "EBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/wAAR"
+        "CAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAA"
+        "AAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oA"
+        "DAMBAAIRAxEAPwCdABmX/9k="
+    )
 
 
 def _fake_synthesize(human_image, garment_image_url, clothing_category, garment_des=""):

@@ -878,3 +878,8 @@ body {
   border-radius: 10px;
   object-fit: contain;
 }
+
+.fit__heatmap {
+  display: block;
+  height: auto;
+}

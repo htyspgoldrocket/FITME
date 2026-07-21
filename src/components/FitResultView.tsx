@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { calculateFit, synthesizeImage } from '../lib/api';
+import FitHeatmap from './FitHeatmap';
 import type {
+  AnalyzeResponse,
   BodyMeasurements,
   CapturedImage,
   ClothingSpec,
@@ -11,6 +13,8 @@ import type {
 interface FitResultViewProps {
   image: CapturedImage;
   measurements: BodyMeasurements;
+  /** 히트맵 오버레이 위치 계산용 (5-3d) — 없으면(오래된 캐시 등) 일반 이미지로 폴백 */
+  landmarks: AnalyzeResponse['landmarks'];
   spec: ClothingSpec;
   /** 같은 입력의 이전 핏 결과 (App 보관) — 뒤로가기 재진입 시 재요청(AI 1회) 방지 */
   cached: FitResponse | null;
@@ -56,6 +60,7 @@ type SynthState =
 function FitResultView({
   image,
   measurements,
+  landmarks,
   spec,
   cached,
   onLoaded,
@@ -264,18 +269,29 @@ function FitResultView({
 
         {synthState.status === 'done' &&
           synthState.response.ok &&
-          synthState.response.imageBase64 && (
-            <>
-              <img
-                src={`data:image/jpeg;base64,${synthState.response.imageBase64}`}
-                alt="가상 착용 이미지"
-                className="fit__synth-img"
-              />
-              <p className="result__note">
-                합성 이미지는 외관 참고용이에요 — 실제 핏은 위 표의 수치를 기준으로 봐주세요
-              </p>
-            </>
-          )}
+          synthState.response.imageBase64 &&
+          (landmarks ? (
+            <FitHeatmap
+              imageBase64={synthState.response.imageBase64}
+              originalImage={image}
+              landmarks={landmarks}
+              scores={result.scores}
+            />
+          ) : (
+            <img
+              src={`data:image/jpeg;base64,${synthState.response.imageBase64}`}
+              alt="가상 착용 이미지"
+              className="fit__synth-img"
+            />
+          ))}
+
+        {synthState.status === 'done' && synthState.response.ok && synthState.response.imageBase64 && (
+          <p className="result__note">
+            {landmarks
+              ? '색상 밴드는 대략적 위치 안내예요 — 실제 핏은 라벨의 cm 수치를 기준으로 봐주세요'
+              : '합성 이미지는 외관 참고용이에요 — 실제 핏은 위 표의 수치를 기준으로 봐주세요'}
+          </p>
+        )}
       </div>
 
       <div className="result__actions">
