@@ -9,6 +9,7 @@
 
 import type {
   AnalyzeResponse,
+  BetaStatus,
   BodyMeasurements,
   CapturedImage,
   ClothingResponse,
@@ -22,6 +23,61 @@ import type {
 
 /** 백엔드 베이스 경로 — dev는 Vite 프록시(/api → localhost:8000)가 중계 */
 export const API_BASE = '/api';
+
+// ===== 베타 게이트 (6-2 — 주변인 무료 베타 접근 코드) =====
+
+const BETA_CODE_KEY = 'fitme-beta-code';
+// localStorage 접근 불가(시크릿 모드 등) 시 세션 동안만 유지하는 폴백
+let betaCodeInMemory: string | null = null;
+
+/** 저장된 베타 코드 — 없으면 null (로컬 개발 = 게이트 비활성이라 무해) */
+export function getBetaCode(): string | null {
+  try {
+    return localStorage.getItem(BETA_CODE_KEY) ?? betaCodeInMemory;
+  } catch {
+    return betaCodeInMemory;
+  }
+}
+
+export function saveBetaCode(code: string): void {
+  betaCodeInMemory = code;
+  try {
+    localStorage.setItem(BETA_CODE_KEY, code);
+  } catch {
+    /* 저장 불가 — 메모리 폴백으로 세션 동안만 유지 */
+  }
+}
+
+/** AI 비용 라우트(/analyze·/synthesize)에 붙일 베타 코드 헤더 */
+function betaHeaders(): Record<string, string> {
+  const code = getBetaCode();
+  return code ? { 'X-Beta-Code': code } : {};
+}
+
+/**
+ * 베타 게이트 상태 확인 (6-2) — GET /beta, AI 호출 0·사용량 카운트 0.
+ * @throws 서버 미응답·HTTP 오류 시 Error — 호출부(BetaGate)는 fail-open
+ *         (UX는 열고, 실제 방어는 백엔드 access_guard가 담당)
+ */
+export async function fetchBetaStatus(
+  code: string | null,
+  timeoutMs = 5000,
+): Promise<BetaStatus> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}/beta`, {
+      headers: code ? { 'X-Beta-Code': code } : {},
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`beta 확인 실패: HTTP ${res.status}`);
+    }
+    return (await res.json()) as BetaStatus;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /**
  * 촬영 품질 판정 (층위 3, 2-8d) — POST /check-photo 실시간 폴링용.
@@ -71,7 +127,8 @@ export async function analyzeBody(
   try {
     const res = await fetch(`${API_BASE}/analyze`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      // 베타 코드(6-2) — 배포 환경에서 access_guard(6-1)가 검사
+      headers: { 'Content-Type': 'application/json', ...betaHeaders() },
       body: JSON.stringify({ image, mode, ...(profile ? { profile } : {}) }),
       signal: controller.signal,
     });
@@ -168,7 +225,8 @@ export async function synthesizeImage(
   try {
     const res = await fetch(`${API_BASE}/synthesize`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      // 베타 코드(6-2) — 배포 환경에서 access_guard(6-1)가 검사
+      headers: { 'Content-Type': 'application/json', ...betaHeaders() },
       body: JSON.stringify({ humanImage: humanImageWithoutFrames, clothing }),
       signal: controller.signal,
     });

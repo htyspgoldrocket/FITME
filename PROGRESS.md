@@ -643,6 +643,25 @@
     방지). 검증: pytest 10건 신규(비활성/403/카운트·상한/IP 분리/전체 상한/
     날짜 리셋/거부 미카운트/라우트 배선 403/health 비보호) 전체 **178/178**,
     E2E e2e-analyze 27/27(env 미설정 무영향 실확인)
+  - **6-2a ✅ 완료 (2026-07-22)**: `GET /beta` — 게이트 상태 확인(AI 호출 0·
+    카운트 0). **신규 계약 BetaStatus**(active/codeOk — CLAUDE.md 6장→
+    types/index.ts→schemas.py 동기화). 프론트 게이트의 UX용이며 실제 강제는
+    access_guard가 담당(응답 우회해도 비용 보호). pytest 3건 신규 **181/181**
+  - **6-2b ✅ 완료 (2026-07-22) → Step 6-2 전체 완료**: 프론트 베타 게이트 —
+    `BetaGate.tsx` 신규(앱 진입 최전단, App.betaPassed): ① 초대 코드 입력
+    (localStorage 저장+메모리 폴백, 재방문 시 재검증 후 게이트 생략) ②
+    개인정보 고지(사진 외부 전송·Replicate 1시간 삭제·서버 무저장) ③
+    "무료 베타·비상업" 명시(12장 배포 방침 이행) ④ "동의하고 시작하기"
+    버튼이 고지 동의 겸함. **fail-open 설계**: /beta 확인 실패(로컬 개발·
+    서버 다운) 시 게이트 없이 진행 — UX는 열고 방어는 서버(6-1). api.ts에
+    X-Beta-Code 헤더를 /analyze·/synthesize에 자동 첨부(betaHeaders).
+    가짜 백엔드 usage.sqlite 임시 파일 격리 추가. 검증: tsc+build,
+    **E2E 신규 10/10**(`tests/e2e-beta-gate.mjs` — 게이트 표시·고지 3종·
+    틀린 코드 거부·통과·새로고침 생략·가드 활성 상태 측정 완주로 헤더
+    전파를 403 없이 실증. 제어 입력 교체는 Ctrl+A — 배운 것 2번 재확인),
+    **회귀 전 스위트**: analyze 27/27·profile 23/23·clothing-url 11/11·
+    clothing-spec 13/13·fit 10/10·synthesize 12/12·autoshoot 10/10(실백엔드),
+    게이트 스크린샷 육안 확인
 - (아래는 4-2 설계 기록 — 구현 완료됐으나 근거 추적용 보존)
   설계안 요지 (2026-07-18 제시 — 세션 무관 재개용 기록):
   - **알고리즘 2단계**: ① 하한 필터 — 비교 부위 중 tight가 있는 사이즈는

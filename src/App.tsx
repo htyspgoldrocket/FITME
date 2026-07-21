@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import BetaGate from './components/BetaGate';
 import ModeSelect from './components/ModeSelect';
 import ProfileInput from './components/ProfileInput';
 import CameraView, { TIMER_OPTIONS, type TimerSeconds } from './components/CameraView';
@@ -34,6 +35,8 @@ type Screen =
   | 'fit-result';
 
 function App() {
+  // 베타 게이트(6-2b) — 배포 환경에서만 초대 코드 + 고지. 통과 후 앱 진입
+  const [betaPassed, setBetaPassed] = useState(false);
   const [screen, setScreen] = useState<Screen>('mode-select');
   const [mode, setMode] = useState<MeasurementMode | null>(null);
   const [image, setImage] = useState<CapturedImage | null>(null);
@@ -89,6 +92,10 @@ function App() {
       setCapturing(false);
     }
   };
+
+  if (!betaPassed) {
+    return <BetaGate onPass={() => setBetaPassed(true)} />;
+  }
 
   if (screen === 'mode-select' || mode === null) {
     return <ModeSelect onSelect={handleModeSelect} />;

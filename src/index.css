@@ -15,6 +15,97 @@ body {
   color: #f9fafb;
 }
 
+/* ===== 베타 게이트 (Phase 6-2b — 초대 코드 + 고지) ===== */
+.beta {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 40px 20px calc(24px + env(safe-area-inset-bottom));
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.beta--center {
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 0;
+}
+
+.beta__title {
+  margin: 0;
+  font-size: 2rem;
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+
+.beta__badge {
+  margin: 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.beta__notice {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #374151;
+  background: #1f2937;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #d1d5db;
+}
+
+.beta__notice ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.beta__label {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: #d1d5db;
+}
+
+.beta__input {
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid #374151;
+  background: #1f2937;
+  color: inherit;
+  font-size: 1.1rem;
+}
+
+.beta__input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.beta__error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #f87171;
+}
+
+.beta__btn {
+  padding: 14px 0;
+  border-radius: 12px;
+  border: 1px solid #22c55e;
+  background: #15803d;
+  color: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.beta__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* ===== 모드 선택 화면 ===== */
 .mode-select {
   display: flex;

@@ -170,4 +170,12 @@ _db_fd, _db_path = tempfile.mkstemp(suffix=".sqlite")
 os.close(_db_fd)  # sqlite opens by path; a 0-byte existing file is a valid new DB
 clothing_store.DB_PATH = Path(_db_path)
 
+# --- access guard (6-1): usage counter goes to a per-process temp DB so E2E
+# runs with FITME_BETA_CODE set never touch the real usage.sqlite.
+from services import access_guard  # noqa: E402
+
+_ag_fd, _ag_path = tempfile.mkstemp(suffix=".sqlite")
+os.close(_ag_fd)
+access_guard.DB_PATH = Path(_ag_path)
+
 from main import app  # noqa: E402, F401
