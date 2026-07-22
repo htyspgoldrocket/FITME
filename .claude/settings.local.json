@@ -182,7 +182,8 @@
       "PowerShell(node tests/e2e-fit.mjs)",
       "PowerShell(node tests/e2e-synthesize.mjs)",
       "PowerShell(Start-Process -FilePath \"C:\\\\claude_code\\\\FITME\\\\server\\\\venv\\\\Scripts\\\\uvicorn.exe\" -ArgumentList \"main:app --port 8000\" -WorkingDirectory \"C:\\\\claude_code\\\\FITME\\\\server\" -WindowStyle Hidden; Start-Sleep -Seconds 6; node tests/e2e-autoshoot.mjs)",
-      "PowerShell(node \"C:\\\\claude_code\\\\FITME\\\\tmp-screenshots\\\\shot-beta-gate.mjs\")"
+      "PowerShell(node \"C:\\\\claude_code\\\\FITME\\\\tmp-screenshots\\\\shot-beta-gate.mjs\")",
+      "PowerShell(npm ci *)"
     ]
   }
 }
