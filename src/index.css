@@ -1,40 +1,42 @@
 :root {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Noto Sans KR', sans-serif;
-  color-scheme: light dark;
+  color-scheme: light;
 
-  /* ===== 테마 팔레트 (UX-1 변수화 — 값은 기존 다크 테마와 동일).
-     카메라·미리보기 화면은 촬영 기능색(검정 배경·판정 초록/빨강·노란 거리 자)
-     이라 변수를 쓰지 않는다 — 팔레트 교체(UX-2)가 침범하지 않도록 격리 ===== */
-  --bg: #111827;
-  --text: #f9fafb;
-  --text-body: #e5e7eb;
-  --text-soft: #d1d5db;
-  --text-muted: #9ca3af;
-  --card: #1f2937;
-  --border: #374151;
-  --border-strong: #4b5563;
-  --accent: #15803d;
-  --accent-border: #22c55e;
-  --accent-strong: #34d399;
-  --mode-simple: #22c55e;
-  --mode-precise: #3b82f6;
-  --focus: #3b82f6;
-  --danger-text: #f87171;
-  --warn-text: #facc15;
-  --warn-text-soft: #fbbf24;
-  --warn-border: rgba(234, 179, 8, 0.6);
-  --warn-bg: rgba(234, 179, 8, 0.08);
-  --conf-high-bg: rgba(34, 197, 94, 0.2);
-  --conf-high-text: #4ade80;
-  --conf-medium-bg: rgba(234, 179, 8, 0.2);
-  --conf-low-bg: rgba(239, 68, 68, 0.2);
-  --fit-tight-bg: #7f1d1d;
-  --fit-tight-text: #fca5a5;
-  --fit-good-bg: #064e3b;
-  --fit-good-text: #6ee7b7;
-  --fit-loose-bg: #1e3a8a;
-  --fit-loose-text: #93c5fd;
+  /* ===== 테마 팔레트 (UX-2 그레이지 — 2026-07-22 사용자 선택).
+     전 항목 WCAG AA 대비 검증 완료 (scratchpad contrast_check — 본문 4.5:1,
+     반투명 wash는 카드색 합성 후 계산). 카메라·미리보기 화면은 촬영 기능색
+     (검정 배경·판정 초록/빨강·노란 거리 자)이라 변수를 쓰지 않는다 ===== */
+  --bg: #eae4da;
+  --text: #2e2a24;
+  --text-body: #3b352d;
+  --text-soft: #575047;
+  --text-muted: #68625a;
+  --card: #f7f3ec;
+  --border: #d8d0c2;
+  --border-strong: #c6bcab;
+  --accent: #4a443c;
+  --accent-text: #f7f3ec;
+  --accent-border: #3a342c;
+  --accent-strong: #2f6b45;
+  --mode-simple: #2f6b45;
+  --mode-precise: #35618e;
+  --focus: #6b5d4f;
+  --danger-text: #a33028;
+  --warn-text: #7e5308;
+  --warn-text-soft: #7e5308;
+  --warn-border: rgba(126, 83, 8, 0.45);
+  --warn-bg: rgba(126, 83, 8, 0.07);
+  --conf-high-bg: rgba(47, 107, 69, 0.16);
+  --conf-high-text: #2f6b45;
+  --conf-medium-bg: rgba(126, 83, 8, 0.14);
+  --conf-low-bg: rgba(163, 48, 40, 0.13);
+  --fit-tight-bg: rgba(163, 48, 40, 0.14);
+  --fit-tight-text: #a33028;
+  --fit-good-bg: rgba(47, 107, 69, 0.16);
+  --fit-good-text: #2f6b45;
+  --fit-loose-bg: rgba(53, 97, 142, 0.15);
+  --fit-loose-text: #35618e;
 }
 
 * {
@@ -128,7 +130,7 @@ body {
   border-radius: 12px;
   border: 1px solid var(--accent-border);
   background: var(--accent);
-  color: inherit;
+  color: var(--accent-text); /* 어두운 진행 버튼 위 밝은 텍스트 (UX-2) */
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -301,6 +303,7 @@ body {
   flex: 2;
   border-color: var(--accent-border);
   background: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
 }
 
@@ -992,6 +995,7 @@ body {
 .result__btn--primary {
   border-color: var(--accent-border);
   background: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
 }
 
