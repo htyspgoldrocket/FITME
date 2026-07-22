@@ -183,7 +183,14 @@
       "PowerShell(node tests/e2e-synthesize.mjs)",
       "PowerShell(Start-Process -FilePath \"C:\\\\claude_code\\\\FITME\\\\server\\\\venv\\\\Scripts\\\\uvicorn.exe\" -ArgumentList \"main:app --port 8000\" -WorkingDirectory \"C:\\\\claude_code\\\\FITME\\\\server\" -WindowStyle Hidden; Start-Sleep -Seconds 6; node tests/e2e-autoshoot.mjs)",
       "PowerShell(node \"C:\\\\claude_code\\\\FITME\\\\tmp-screenshots\\\\shot-beta-gate.mjs\")",
-      "PowerShell(npm ci *)"
+      "PowerShell(npm ci *)",
+      "PowerShell(\\(Get-Content C:\\\\claude_code\\\\FITME\\\\src\\\\index.css | Measure-Object -Line\\).Lines)",
+      "PowerShell(server\\\\venv\\\\Scripts\\\\python.exe \"$env:LOCALAPPDATA\\\\Temp\\\\claude\\\\C--claude-code-FITME\\\\6962647e-ba48-49db-a9a8-549ebe0e8fb0\\\\scratchpad\\\\verify_css_identity.py\" \"$env:LOCALAPPDATA\\\\Temp\\\\claude\\\\C--claude-code-FITME\\\\6962647e-ba48-49db-a9a8-549ebe0e8fb0\\\\scratchpad\\\\baseline.css\" \"C:\\\\claude_code\\\\FITME\\\\dist\\\\assets\\\\index-C1N-IrBq.css\")",
+      "PowerShell(server\\\\venv\\\\Scripts\\\\python.exe \"$env:LOCALAPPDATA\\\\Temp\\\\claude\\\\C--claude-code-FITME\\\\6962647e-ba48-49db-a9a8-549ebe0e8fb0\\\\scratchpad\\\\contrast_check.py\")",
+      "PowerShell(cd C:\\\\claude_code\\\\FITME; Start-Process -FilePath \"cmd.exe\" -ArgumentList \"/c\",\"npm run dev\" -WindowStyle Hidden; Start-Sleep -Seconds 6; node \"$env:LOCALAPPDATA\\\\Temp\\\\claude\\\\C--claude-code-FITME\\\\6962647e-ba48-49db-a9a8-549ebe0e8fb0\\\\scratchpad\\\\shot-themed.mjs\")",
+      "PowerShell(cd C:\\\\claude_code\\\\FITME\\\\server; Start-Process -FilePath \"venv\\\\Scripts\\\\python.exe\" -ArgumentList \"-m\",\"uvicorn\",\"main:app\",\"--port\",\"8000\" -WindowStyle Hidden; Start-Sleep -Seconds 4; $ok1 = \\(Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8000/api/health\\).Content; $ok2 = \\(Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8000/\\).Content.Contains\\('FITME'\\); \"api: $ok1 / front served: $ok2\")",
+      "PowerShell($log = \"$env:LOCALAPPDATA\\\\Temp\\\\claude\\\\C--claude-code-FITME\\\\6962647e-ba48-49db-a9a8-549ebe0e8fb0\\\\scratchpad\\\\tunnel.log\"; Start-Process -FilePath \"${env:ProgramFiles\\(x86\\)}\\\\cloudflared\\\\cloudflared.exe\" -ArgumentList \"tunnel\",\"--url\",\"http://localhost:8000\" -WindowStyle Hidden -RedirectStandardError $log; Start-Sleep -Seconds 8; \\(Get-Content $log | Select-String \"trycloudflare.com\" | Select-Object -First 3\\))",
+      "PowerShell($r = Invoke-WebRequest -UseBasicParsing https://hrs-columns-screensaver-apply.trycloudflare.com/api/health; $r2 = Invoke-WebRequest -UseBasicParsing https://hrs-columns-screensaver-apply.trycloudflare.com/; \"api: $\\($r.Content\\) / front: $\\($r2.Content.Contains\\('FITME'\\)\\)\")"
     ]
   }
 }
