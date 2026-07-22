@@ -2,6 +2,39 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Noto Sans KR', sans-serif;
   color-scheme: light dark;
+
+  /* ===== 테마 팔레트 (UX-1 변수화 — 값은 기존 다크 테마와 동일).
+     카메라·미리보기 화면은 촬영 기능색(검정 배경·판정 초록/빨강·노란 거리 자)
+     이라 변수를 쓰지 않는다 — 팔레트 교체(UX-2)가 침범하지 않도록 격리 ===== */
+  --bg: #111827;
+  --text: #f9fafb;
+  --text-body: #e5e7eb;
+  --text-soft: #d1d5db;
+  --text-muted: #9ca3af;
+  --card: #1f2937;
+  --border: #374151;
+  --border-strong: #4b5563;
+  --accent: #15803d;
+  --accent-border: #22c55e;
+  --accent-strong: #34d399;
+  --mode-simple: #22c55e;
+  --mode-precise: #3b82f6;
+  --focus: #3b82f6;
+  --danger-text: #f87171;
+  --warn-text: #facc15;
+  --warn-text-soft: #fbbf24;
+  --warn-border: rgba(234, 179, 8, 0.6);
+  --warn-bg: rgba(234, 179, 8, 0.08);
+  --conf-high-bg: rgba(34, 197, 94, 0.2);
+  --conf-high-text: #4ade80;
+  --conf-medium-bg: rgba(234, 179, 8, 0.2);
+  --conf-low-bg: rgba(239, 68, 68, 0.2);
+  --fit-tight-bg: #7f1d1d;
+  --fit-tight-text: #fca5a5;
+  --fit-good-bg: #064e3b;
+  --fit-good-text: #6ee7b7;
+  --fit-loose-bg: #1e3a8a;
+  --fit-loose-text: #93c5fd;
 }
 
 * {
@@ -11,8 +44,8 @@
 body {
   margin: 0;
   min-height: 100dvh;
-  background: #111827;
-  color: #f9fafb;
+  background: var(--bg);
+  color: var(--text);
 }
 
 /* ===== 베타 게이트 (Phase 6-2b — 초대 코드 + 고지) ===== */
@@ -43,17 +76,17 @@ body {
   margin: 0;
   text-align: center;
   font-size: 0.85rem;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .beta__notice {
   padding: 14px 16px;
   border-radius: 12px;
-  border: 1px solid #374151;
-  background: #1f2937;
+  border: 1px solid var(--border);
+  background: var(--card);
   font-size: 0.88rem;
   line-height: 1.55;
-  color: #d1d5db;
+  color: var(--text-soft);
 }
 
 .beta__notice ul {
@@ -67,34 +100,34 @@ body {
 .beta__label {
   margin-top: 6px;
   font-size: 0.9rem;
-  color: #d1d5db;
+  color: var(--text-soft);
 }
 
 .beta__input {
   padding: 14px;
   border-radius: 12px;
-  border: 2px solid #374151;
-  background: #1f2937;
+  border: 2px solid var(--border);
+  background: var(--card);
   color: inherit;
   font-size: 1.1rem;
 }
 
 .beta__input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--focus);
 }
 
 .beta__error {
   margin: 0;
   font-size: 0.85rem;
-  color: #f87171;
+  color: var(--danger-text);
 }
 
 .beta__btn {
   padding: 14px 0;
   border-radius: 12px;
-  border: 1px solid #22c55e;
-  background: #15803d;
+  border: 1px solid var(--accent-border);
+  background: var(--accent);
   color: inherit;
   font-size: 1rem;
   font-weight: 600;
@@ -129,7 +162,7 @@ body {
 
 .mode-select__header p {
   margin: 0;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .mode-card {
@@ -138,8 +171,8 @@ body {
   gap: 8px;
   padding: 20px;
   border-radius: 16px;
-  border: 2px solid #374151;
-  background: #1f2937;
+  border: 2px solid var(--border);
+  background: var(--card);
   color: inherit;
   text-align: left;
   font-size: 1rem;
@@ -152,12 +185,12 @@ body {
 
 .mode-card--simple:active,
 .mode-card--simple:focus-visible {
-  border-color: #22c55e;
+  border-color: var(--mode-simple);
 }
 
 .mode-card--precise:active,
 .mode-card--precise:focus-visible {
-  border-color: #3b82f6;
+  border-color: var(--mode-precise);
 }
 
 .mode-card__badge {
@@ -171,7 +204,7 @@ body {
 .mode-card ul {
   margin: 0;
   padding-left: 18px;
-  color: #9ca3af;
+  color: var(--text-muted);
   font-size: 0.9rem;
   line-height: 1.6;
 }
@@ -198,7 +231,7 @@ body {
 
 .profile__header p {
   margin: 0;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .profile__field {
@@ -214,37 +247,37 @@ body {
 .profile__required {
   font-style: normal;
   font-size: 0.78rem;
-  color: #f87171;
+  color: var(--danger-text);
 }
 
 .profile__optional {
   font-style: normal;
   font-size: 0.78rem;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .profile__field input {
   padding: 14px;
   border-radius: 12px;
-  border: 2px solid #374151;
-  background: #1f2937;
+  border: 2px solid var(--border);
+  background: var(--card);
   color: inherit;
   font-size: 1.1rem;
 }
 
 .profile__field input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--focus);
 }
 
 .profile__hint {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: var(--text-muted);
   line-height: 1.5;
 }
 
 .profile__hint--error {
-  color: #f87171;
+  color: var(--danger-text);
 }
 
 .profile__actions {
@@ -257,8 +290,8 @@ body {
   flex: 1;
   padding: 14px 0;
   border-radius: 12px;
-  border: 1px solid #4b5563;
-  background: #1f2937;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
   color: inherit;
   font-size: 1rem;
   cursor: pointer;
@@ -266,8 +299,8 @@ body {
 
 .profile__btn--primary {
   flex: 2;
-  border-color: #22c55e;
-  background: #15803d;
+  border-color: var(--accent-border);
+  background: var(--accent);
   font-weight: 600;
 }
 
@@ -297,7 +330,7 @@ body {
 .camera--error button {
   padding: 10px 24px;
   border-radius: 10px;
-  border: 1px solid #4b5563;
+  border: 1px solid #4b5563; /* 카메라 화면 — 테마 변수 미사용 (기능색 격리) */
   background: #1f2937;
   color: inherit;
   font-size: 1rem;
@@ -500,7 +533,7 @@ body {
   min-width: 200px;
   padding: 14px 32px;
   border-radius: 12px;
-  border: 1px solid #22c55e;
+  border: 1px solid #22c55e; /* 카메라 오버레이 — 테마 변수 미사용 */
   background: #15803d;
   color: #fff;
   font-size: 1rem;
@@ -726,7 +759,7 @@ body {
   flex: 1;
   padding: 14px 0;
   border-radius: 12px;
-  border: 1px solid #4b5563;
+  border: 1px solid #4b5563; /* 미리보기 = 사진 감상 맥락 — 어두운 화면 유지 */
   background: #1f2937;
   color: inherit;
   font-size: 1rem;
@@ -768,7 +801,7 @@ body {
 
 .result__note {
   margin: 0;
-  color: #9ca3af;
+  color: var(--text-muted);
   font-size: 0.88rem;
   line-height: 1.5;
 }
@@ -779,7 +812,7 @@ body {
   width: min(230px, 65vw);
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid #374151;
+  border: 1px solid var(--border);
 }
 
 .result__failure-photo img {
@@ -820,19 +853,19 @@ body {
   text-align: left;
   font-size: 0.9rem;
   line-height: 1.5;
-  color: #d1d5db;
+  color: var(--text-soft);
 }
 
 .result__causes li::before {
   content: '· ';
-  color: #facc15;
+  color: var(--warn-text);
 }
 
 .result__spinner {
   width: 44px;
   height: 44px;
-  border: 4px solid #374151;
-  border-top-color: #22c55e;
+  border: 4px solid var(--border);
+  border-top-color: var(--accent-border);
   border-radius: 50%;
   animation: result-spin 0.9s linear infinite;
   margin-bottom: 8px;
@@ -847,7 +880,7 @@ body {
 .result__table {
   width: 100%;
   border-collapse: collapse;
-  background: #1f2937;
+  background: var(--card);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -856,7 +889,7 @@ body {
 .result__table td {
   padding: 12px 14px;
   text-align: left;
-  border-bottom: 1px solid #374151;
+  border-bottom: 1px solid var(--border);
   font-size: 0.95rem;
 }
 
@@ -867,7 +900,7 @@ body {
 
 .result__table th {
   font-weight: 500;
-  color: #d1d5db;
+  color: var(--text-soft);
 }
 
 .result__value {
@@ -883,18 +916,18 @@ body {
 }
 
 .result__conf--high {
-  background: rgba(34, 197, 94, 0.2);
-  color: #4ade80;
+  background: var(--conf-high-bg);
+  color: var(--conf-high-text);
 }
 
 .result__conf--medium {
-  background: rgba(234, 179, 8, 0.2);
-  color: #facc15;
+  background: var(--conf-medium-bg);
+  color: var(--warn-text);
 }
 
 .result__conf--low {
-  background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
+  background: var(--conf-low-bg);
+  color: var(--danger-text);
 }
 
 /* 층위 4 — 재촬영 권고 (2-8f) */
@@ -903,29 +936,29 @@ body {
   flex-direction: column;
   gap: 10px;
   padding: 14px;
-  border: 1px solid rgba(234, 179, 8, 0.6);
+  border: 1px solid var(--warn-border);
   border-radius: 12px;
-  background: rgba(234, 179, 8, 0.08);
+  background: var(--warn-bg);
   font-size: 0.9rem;
 }
 
 .result__retake strong {
-  color: #facc15;
+  color: var(--warn-text);
 }
 
 .result__retake ul {
   margin: 0;
   padding-left: 18px;
-  color: #e5e7eb;
+  color: var(--text-body);
   line-height: 1.6;
 }
 
 .result__warnings {
-  background: #1f2937;
+  background: var(--card);
   border-radius: 12px;
   padding: 12px 14px;
   font-size: 0.88rem;
-  color: #fbbf24;
+  color: var(--warn-text-soft);
 }
 
 .result__warnings summary {
@@ -935,7 +968,7 @@ body {
 .result__warnings ul {
   margin: 8px 0 0;
   padding-left: 18px;
-  color: #d1d5db;
+  color: var(--text-soft);
   line-height: 1.6;
 }
 
@@ -949,16 +982,16 @@ body {
   flex: 1;
   padding: 14px 0;
   border-radius: 12px;
-  border: 1px solid #4b5563;
-  background: #1f2937;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
   color: inherit;
   font-size: 1rem;
   cursor: pointer;
 }
 
 .result__btn--primary {
-  border-color: #22c55e;
-  background: #15803d;
+  border-color: var(--accent-border);
+  background: var(--accent);
   font-weight: 600;
 }
 
@@ -977,8 +1010,8 @@ body {
 .placeholder button {
   padding: 10px 20px;
   border-radius: 10px;
-  border: 1px solid #4b5563;
-  background: #1f2937;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
   color: inherit;
   font-size: 1rem;
   cursor: pointer;
@@ -999,11 +1032,11 @@ body {
 
 .spec__table thead th {
   font-size: 0.82rem;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .spec__needs-input {
-  color: #fbbf24;
+  color: var(--warn-text-soft);
 }
 
 /* ===== 핏 결과 화면 (4-4b) ===== */
@@ -1012,19 +1045,19 @@ body {
   display: flex;
   align-items: baseline;
   gap: 12px;
-  background: #1f2937;
+  background: var(--card);
   border-radius: 12px;
   padding: 16px;
 }
 
 .fit__recommend-label {
-  color: #9ca3af;
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 
 .fit__recommend-size {
   font-size: 2rem;
-  color: #34d399;
+  color: var(--accent-strong);
 }
 
 .fit__status {
@@ -1035,22 +1068,22 @@ body {
 }
 
 .fit__status--tight {
-  background: #7f1d1d;
-  color: #fca5a5;
+  background: var(--fit-tight-bg);
+  color: var(--fit-tight-text);
 }
 
 .fit__status--good {
-  background: #064e3b;
-  color: #6ee7b7;
+  background: var(--fit-good-bg);
+  color: var(--fit-good-text);
 }
 
 .fit__status--loose {
-  background: #1e3a8a;
-  color: #93c5fd;
+  background: var(--fit-loose-bg);
+  color: var(--fit-loose-text);
 }
 
 .fit__recommendation {
-  background: #1f2937;
+  background: var(--card);
   border-radius: 12px;
   padding: 14px 16px;
   line-height: 1.7;
@@ -1060,7 +1093,7 @@ body {
 /* ===== 가상 착용 보기 (5-3c) ===== */
 
 .fit__synth {
-  background: #1f2937;
+  background: var(--card);
   border-radius: 12px;
   padding: 16px;
   display: flex;
@@ -1071,7 +1104,7 @@ body {
 .fit__synth h3 {
   margin: 0;
   font-size: 1rem;
-  color: #e5e7eb;
+  color: var(--text-body);
 }
 
 .fit__synth-img {
