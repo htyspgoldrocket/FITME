@@ -677,12 +677,29 @@
     = index.html 동일, manifest.webmanifest 정확한 MIME, 해시 에셋 JS 200,
     /api/beta·/beta(하위 호환) 둘 다 200, E2E autoshoot 10/10(실백엔드 —
     main.py 실코드 경유 유일 스위트)
-- **다음 시작 지점: 6-3b Dockerfile** — 클라우드 컨테이너용(python +
-  opencv-python + playwright chromium 설치 — 이미지 큼 주의. 프론트 빌드는
-  멀티스테이지 or 사전 빌드 dist 복사 방식 결정). 이후 6-4 호스팅(클라우드
-  컨테이너 확정, Railway 등 — 계정·카드는 사용자 준비) + 환경 변수 셋업
-  (ANTHROPIC_API_KEY·REPLICATE_API_TOKEN·FITME_BETA_CODE·상한 2종) →
-  6-5 배포 URL 실기기 검증
+  - **6-3b ✅ 작성 완료 (2026-07-22) → Step 6-3 전체 완료 — ⚠️ 이미지 빌드
+    검증은 6-4 Railway 원격 빌드로 이월 (사용자 결정, 정직 기록)**:
+    `Dockerfile` + `.dockerignore` 신규. **멀티스테이지** — dist가 gitignore라
+    컨테이너 안에서 프론트 빌드: Stage 1 node:22-slim(npm ci→build) →
+    Stage 2 python:3.12-slim(로컬 venv 3.12.4 정합. apt libgl1+libglib2.0-0 —
+    slim에 없는 opencv 공유 라이브러리 / pip requirements → playwright
+    install --with-deps chromium — 레이어 캐시 순서 고려 / server 복사 +
+    dist를 /app/dist로 — 6-3a FRONT_DIST 경로 정합). CMD는 `${PORT:-8000}`
+    (Railway PORT 주입 대응). `.dockerignore`가 .env·개인 사진 fixtures·venv
+    이미지 유입 차단(규칙 10).
+    **검증된 것**: Stage 1 동일 명령 로컬 실행(npm ci 클린 설치→build 통과) /
+    백엔드 경로 전수 확인 — 데이터·SQLite·ENV_PATH 전부 `__file__` 기준 +
+    환경 변수 os.environ 우선(.env 폴백)이라 컨테이너 주입 호환.
+    **미검증 (Docker 미설치 — 이 PC에 없음)**: Stage 2 빌드·컨테이너 기동 —
+    6-4에서 Railway가 Dockerfile로 원격 빌드하는 것이 첫 실검증. 실패 시
+    이 지점부터 수정
+- **다음 시작 지점: 6-4 호스팅** — Railway 등 클라우드 컨테이너(확정)에
+  Dockerfile 배포. ① 계정·카드는 사용자 준비 ② 환경 변수 셋업
+  (ANTHROPIC_API_KEY·REPLICATE_API_TOKEN·FITME_BETA_CODE·상한 2종 선택) ③
+  원격 빌드 성공 = 6-3b 이월 검증 완료 처리 ④ 공개 URL 확보.
+  **주의(6-4에서 확인)**: Railway 파일시스템은 ephemeral — usage.sqlite
+  (6-1 카운터)가 재배포 시 리셋됨. 볼륨 마운트 or 리셋 수용 여부 결정 필요.
+  이후 6-5 배포 URL 실기기 통합 검증
 - (아래는 4-2 설계 기록 — 구현 완료됐으나 근거 추적용 보존)
   설계안 요지 (2026-07-18 제시 — 세션 무관 재개용 기록):
   - **알고리즘 2단계**: ① 하한 필터 — 비교 부위 중 tight가 있는 사이즈는

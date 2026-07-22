@@ -1,0 +1,26 @@
+# 비밀 (절대 이미지에 넣지 않음 — 규칙 10)
+.env
+.env.*
+server/.env
+
+# 로컬 전용·대용량
+node_modules
+server/venv
+dist
+tmp-screenshots
+docs
+.claude
+.git
+.pytest_cache
+server/.pytest_cache
+**/__pycache__
+
+# 테스트 자산 (개인 사진 fixtures 포함 — 이미지에 절대 미포함)
+tests
+server/tests
+
+# 로컬 생성물
+server/data/clothing_cache.sqlite
+server/data/usage.sqlite
+tests/fake-marker.y4m
+*.log
