@@ -662,12 +662,27 @@
     **회귀 전 스위트**: analyze 27/27·profile 23/23·clothing-url 11/11·
     clothing-spec 13/13·fit 10/10·synthesize 12/12·autoshoot 10/10(실백엔드),
     게이트 스크린샷 육안 확인
-- **다음 시작 지점: 6-3 배포 패키징** — ① FastAPI가 프론트 빌드(dist)를
-  정적 서빙(배포 유닛 1개화 — SPA 폴백 포함, /api 프리픽스는 라우트 그대로)
-  ② 클라우드 컨테이너용 Dockerfile(python + opencv-python + playwright
-  chromium 설치 — 이미지 큼 주의) ③ 이후 6-4 호스팅(클라우드 컨테이너 확정,
-  Railway 등 — 계정·카드는 사용자 준비) + 환경 변수 셋업(ANTHROPIC_API_KEY·
-  REPLICATE_API_TOKEN·FITME_BETA_CODE·상한 2종) → 6-5 배포 URL 실기기 검증
+  - **6-3a ✅ 완료 (2026-07-22)**: 배포 패키징 ① — FastAPI가 프론트 빌드(dist)
+    정적 서빙 (`main.py`만 수정, 배포 유닛 1개화). 구현: ⓐ 기존 라우터를
+    `/api` 프리픽스로도 재등록(APIRouter(prefix="/api") — 프론트 API_BASE가
+    '/api' 고정이므로 배포 시 같은 오리진 직접 호출. **루트 경로(/analyze 등)는
+    하위 호환으로 유지** — pytest·Vite dev 프록시(rewrite로 /api 제거) 무변경)
+    ⓑ `_SpaStaticFiles`(StaticFiles 서브클래스, 404→index.html SPA 폴백 —
+    starlette 0.36 HTTPException 방식 소스 확인) `/` 마운트 — **dist 존재 시에만**
+    (로컬 개발·CI 무영향), 마운트는 라우트보다 후순위라 API 경로 안 가림.
+    주의 교훈: include_router는 호출 시점 복사라 `/api/health` 데코레이터를
+    include보다 먼저 둬야 함(구현 중 순서 버그 잡음). /health phase "6-3a".
+    검증: pytest 181/181, npm run build(tsc 포함), **실서버 기동 확인** —
+    /health·/api/health 200(phase 6-3a), / = index.html, 미지 경로 SPA 폴백
+    = index.html 동일, manifest.webmanifest 정확한 MIME, 해시 에셋 JS 200,
+    /api/beta·/beta(하위 호환) 둘 다 200, E2E autoshoot 10/10(실백엔드 —
+    main.py 실코드 경유 유일 스위트)
+- **다음 시작 지점: 6-3b Dockerfile** — 클라우드 컨테이너용(python +
+  opencv-python + playwright chromium 설치 — 이미지 큼 주의. 프론트 빌드는
+  멀티스테이지 or 사전 빌드 dist 복사 방식 결정). 이후 6-4 호스팅(클라우드
+  컨테이너 확정, Railway 등 — 계정·카드는 사용자 준비) + 환경 변수 셋업
+  (ANTHROPIC_API_KEY·REPLICATE_API_TOKEN·FITME_BETA_CODE·상한 2종) →
+  6-5 배포 URL 실기기 검증
 - (아래는 4-2 설계 기록 — 구현 완료됐으나 근거 추적용 보존)
   설계안 요지 (2026-07-18 제시 — 세션 무관 재개용 기록):
   - **알고리즘 2단계**: ① 하한 필터 — 비교 부위 중 tight가 있는 사이즈는
