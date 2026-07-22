@@ -693,6 +693,29 @@
     **미검증 (Docker 미설치 — 이 PC에 없음)**: Stage 2 빌드·컨테이너 기동 —
     6-4에서 Railway가 Dockerfile로 원격 빌드하는 것이 첫 실검증. 실패 시
     이 지점부터 수정
+- **UX 테마 전환 ✅ 완료 (2026-07-22, 사용자 요청 — 배포 전 진행)**: 다크 →
+  **그레이지 베이지 라이트 테마** (팔레트 후보 3종 목업 제시 → 사용자 2안 선택).
+  3단계 진행:
+  - **UX-1 색 변수화 (커밋 53d55a5)**: index.css 하드코딩 색 → :root 변수
+    29종. **카메라·미리보기 화면은 촬영 기능색(검정 배경·판정 초록/빨강·노란
+    거리 자·미리보기 어두운 배경)이라 변수 미사용으로 격리** — 팔레트 교체가
+    침범 불가. 검증: 빌드 CSS var() 되치환 == 이전 빌드와 문자 단위 동일
+    (전 화면 무변화 증명 — esbuild rgba↔hex8 비일관은 양쪽 정준화로 해소)
+  - **UX-2 그레이지 적용 (커밋 801cb3a)**: 배경 #eae4da·카드 #f7f3ec·텍스트
+    #2e2a24·진행 버튼 다크 브라운 #4a443c(+--accent-text 명시 3곳 — 어두운
+    버튼 위 밝은 글씨). 핏 의미색은 색상 유지·라이트용 명도 조정(빨강 #a33028·
+    초록 #2f6b45·파랑 #35618e, wash 배경). **전 항목 WCAG AA(4.5:1) 대비
+    계산 검증**(muted·warn 텍스트는 미달로 어둡게 교정 후 통과). 검증:
+    화면 6종 스크린샷 육안(tmp-screenshots/shots) + E2E 7스위트 개별 전부
+    통과(profile 23·analyze 27·clothing-url 11·clothing-spec 13·fit 10·
+    synthesize 12·beta-gate 10)
+  - **UX-3 경계 정리**: index.html theme-color + PWA 매니페스트
+    theme_color/background_color #eae4da 동기화. 카메라 화면 스크린샷으로
+    무영향 재확인. 캡처 도구 tmp-screenshots/shot-themed.mjs(가짜 백엔드
+    주행 6화면 일괄 캡처) 보존
+  - **잔여**: 실기기 육안 확인은 6-5 배포 검증 세션에 포함(별도 세션 불필요 —
+    데스크톱 스크린샷 확인 완료). 히트맵(사진 위 오버레이) 색은 기존 유지 —
+    사진 위 가독성은 기존 채도가 유리
 - **다음 시작 지점: 6-4 호스팅** — Railway 등 클라우드 컨테이너(확정)에
   Dockerfile 배포. ① 계정·카드는 사용자 준비 ② 환경 변수 셋업
   (ANTHROPIC_API_KEY·REPLICATE_API_TOKEN·FITME_BETA_CODE·상한 2종 선택) ③

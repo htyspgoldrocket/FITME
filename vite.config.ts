@@ -15,8 +15,8 @@ export default defineConfig({
         lang: 'ko',
         display: 'standalone',
         orientation: 'portrait',
-        theme_color: '#111827',
-        background_color: '#111827',
+        theme_color: '#eae4da',
+        background_color: '#eae4da',
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
